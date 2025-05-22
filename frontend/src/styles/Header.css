@@ -1,0 +1,11 @@
+/* src/components/Header.css */
+.header {
+    background-color: #4ca1af;
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid #2c3e50;
+  }
+  

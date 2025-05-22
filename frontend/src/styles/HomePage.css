@@ -1,0 +1,21 @@
+/* src/styles/HomePage.css */
+.home-layout {
+    display: flex;
+    height: 100vh;
+    background-color: #f0f2f5;
+  }
+  
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .dashboard-placeholder {
+    padding: 40px;
+    background-color: #fff;
+    border-radius: 10px;
+    margin: 20px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+  }
+  

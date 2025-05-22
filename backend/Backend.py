@@ -39,5 +39,24 @@ def adicionar_material():
         cursor.close()
         conn.close()
 
+@app.route("/materiaisList", methods=["GET"])
+def listar_materiais():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)  # retorna dados em formato de dicionário
+
+        cursor.execute("SELECT * FROM materiais")
+        materiais = cursor.fetchall()
+
+        return jsonify(materiais), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
 if __name__ == "__main__":
     app.run(debug=True)
