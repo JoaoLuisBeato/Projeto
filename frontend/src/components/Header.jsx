@@ -1,12 +1,12 @@
-// src/components/Header.jsx
 import React from "react";
+import { useLocation } from "react-router-dom";
 import "../styles/Header.css";
 
 function Header() {
-  // Substitua por dados reais depois
-  const usuario = {
-    nome: "João Beato",
-    email: "joao@empresa.com"
+  const location = useLocation();
+  const usuario = location.state?.usuario || {
+    nome: "Usuário",
+    email: "sem dados"
   };
 
   return (

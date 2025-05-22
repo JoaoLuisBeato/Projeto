@@ -5,6 +5,37 @@ from db import get_connection
 app = Flask(__name__)
 CORS(app)
 
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.json
+    email = data.get("email")
+    senha = data.get("senha")
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = "SELECT * FROM usuarios WHERE email = %s AND senha = %s"
+        cursor.execute(query, (email, senha))
+        user = cursor.fetchone()
+
+        if user:
+            return jsonify({
+                "id": user["id"],
+                "nome": user["nome"],
+                "email": user["email"]
+            }), 200
+        else:
+            return jsonify({"error": "Credenciais inválidas"}), 401
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
 @app.route("/materiais", methods=["POST"])
 def adicionar_material():
     data = request.json

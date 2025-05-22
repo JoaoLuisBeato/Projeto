@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "../styles/LoginPage.css";
 
 function LoginPage() {
@@ -7,11 +8,19 @@ function LoginPage() {
   const [senha, setSenha] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    if (email === "joao@hotmail.com" && senha === "beato") {
-      navigate("/dashboard", { state: { email, senha } });
-    } else {
-      alert("Credenciais inválidas.");
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/login", {
+        email,
+        senha
+      });
+
+      const usuario = response.data;
+      navigate("/home", { state: { usuario } });
+
+    } catch (error) {
+      alert("Email ou senha inválidos");
+      console.error(error);
     }
   };
 
