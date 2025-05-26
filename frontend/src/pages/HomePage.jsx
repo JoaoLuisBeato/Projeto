@@ -11,7 +11,7 @@ function HomePage() {
       <div className="main-content">
         <Header />
         <div className="dashboard-placeholder">
-          <h2>Bem-vindo ao Sistema de Gerenciamento de Laboratório</h2>
+          <h2>Gerenciamento de Reagentes/Padrões do Laboratório</h2>
           <p>Aqui você poderá visualizar resumos do sistema futuramente.</p>
         </div>
       </div>

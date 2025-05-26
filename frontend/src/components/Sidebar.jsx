@@ -12,6 +12,7 @@ function Sidebar() {
           <li><Link to="/home">🏠 Início</Link></li>
           <li><Link to="/materiais">➕ Cadastrar Material</Link></li>
           <li><Link to="/materiaisList">📋 Lista de Materiais</Link></li>
+          <li><Link to="/baixa-material">📉 Dar Baixa</Link></li>
         </ul>
       </nav>
     </div>

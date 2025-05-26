@@ -5,6 +5,10 @@ import Dashboard from "./pages/Dashboard";
 import MateriaisPage from "./pages/CadastroMaterialPage";
 import MateriaisListPage from "./pages/MateriaisListPage";
 import HomePage from "./pages/HomePage";
+import BaixaMaterialPage from "./pages/BaixaMaterialPage";
+
+
+
 
 
 function App() {
@@ -16,6 +20,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/materiais" element={<MateriaisPage />} />
         <Route path="/materiaisList" element={<MateriaisListPage />} />
+        <Route path="/baixa-material" element={<BaixaMaterialPage />} />
       </Routes>
     </Router>
   );

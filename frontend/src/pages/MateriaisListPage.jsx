@@ -28,19 +28,23 @@ function MateriaisListPage() {
             <th>Tipo</th>
             <th>Fabricante</th>
             <th>Quantidade</th>
+            <th>Estoque Atual</th>
+            <th>Estoque Mínimo</th>
             <th>Validade</th>
             <th>Preço (R$)</th>
           </tr>
         </thead>
         <tbody>
           {materiais.map(mat => (
-            <tr key={mat.id}>
-              <td>{mat.nome}</td>
-              <td>{mat.tipo}</td>
-              <td>{mat.fabricante}</td>
-              <td>{mat.quantidade} {mat.unidade}</td>
-              <td>{new Date(mat.validade).toLocaleDateString("pt-BR")}</td>
-              <td>{Number(mat.preco).toFixed(2)}</td>
+            <tr key={mat.id} style={{ backgroundColor: mat.estoque_atual <= mat.estoque_minimo ? '#ffe5e5' : 'transparent' }}>
+                <td>{mat.nome}</td>
+                <td>{mat.tipo}</td>
+                <td>{mat.fabricante}</td>
+                <td>{mat.quantidade} {mat.unidade}</td>
+                <td>{mat.estoque_atual}</td>
+                <td>{mat.estoque_minimo}</td>
+                <td>{new Date(mat.validade).toLocaleDateString("pt-BR")}</td>
+                <td>{Number(mat.preco).toFixed(2)}</td>
             </tr>
           ))}
         </tbody>

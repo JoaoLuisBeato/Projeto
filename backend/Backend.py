@@ -45,17 +45,20 @@ def adicionar_material():
         cursor = conn.cursor()
 
         query = """
-        INSERT INTO materiais (nome, tipo, fabricante, quantidade, unidade, validade, preco)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO materiais (nome, tipo, fabricante, quantidade, unidade, validade, preco, estoque_atual, estoque_minimo)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+
         """
         values = (
             data["nome"],
-            data["tipo"],
+            data["tipo"], 
             data["fabricante"],
-            data["quantidade"],
-            data["unidade"],
-            data["validade"],
-            data["preco"]
+            data["quantidade"], 
+            data["unidade"], 
+            data["validade"], 
+            data["preco"],
+            data["estoque_atual"], 
+            data["estoque_minimo"]
         )
 
         cursor.execute(query, values)
@@ -70,13 +73,14 @@ def adicionar_material():
         cursor.close()
         conn.close()
 
+
 @app.route("/materiaisList", methods=["GET"])
 def listar_materiais():
     try:
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)  # retorna dados em formato de dicionário
 
-        cursor.execute("SELECT * FROM materiais")
+        cursor.execute("SELECT * FROM materiais ORDER BY nome ASC")
         materiais = cursor.fetchall()
 
         return jsonify(materiais), 200
@@ -88,6 +92,40 @@ def listar_materiais():
         cursor.close()
         conn.close()
 
+
+@app.route("/materiais/<int:id>/baixa", methods=["PATCH"])
+def dar_baixa(id):
+    data = request.json
+    quantidade_baixa = float(data.get("quantidade"))
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Verifica estoque atual
+        cursor.execute("SELECT estoque_atual FROM materiais WHERE id = %s", (id,))
+        result = cursor.fetchone()
+        if not result:
+            return jsonify({"error": "Material não encontrado"}), 404
+
+        estoque_atual = float(result[0])
+        if quantidade_baixa > estoque_atual:
+            return jsonify({"error": "Quantidade insuficiente no estoque"}), 400
+
+        novo_estoque = estoque_atual - quantidade_baixa
+
+        # Atualiza estoque
+        cursor.execute("UPDATE materiais SET estoque_atual = %s WHERE id = %s", (novo_estoque, id))
+        conn.commit()
+
+        return jsonify({"message": "Baixa realizada com sucesso", "estoque_atual": novo_estoque}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
 
 if __name__ == "__main__":
     app.run(debug=True)

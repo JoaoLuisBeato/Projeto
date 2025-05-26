@@ -30,7 +30,10 @@ function CadastroMaterialPage() {
         quantidade: "",
         unidade: "",
         validade: "",
-        preco: ""
+        preco: "",
+        estoque_atual: "",
+        estoque_minimo: "",
+
       });
     } catch (error) {
       console.error("Erro ao cadastrar material:", error);
@@ -50,6 +53,8 @@ function CadastroMaterialPage() {
           <input name="unidade" type="text" placeholder="Unidade" value={form.unidade} onChange={handleChange} required />
           <input name="validade" type="date" placeholder="Validade" value={form.validade} onChange={handleChange} required />
           <input name="preco" type="number" step="0.01" placeholder="Preço (R$)" value={form.preco} onChange={handleChange} required />
+          <input name="estoque_atual" type="number" placeholder="Estoque atual" value={form.estoque_atual} onChange={handleChange} required />
+          <input name="estoque_minimo" type="number" placeholder="Estoque mínimo" value={form.estoque_minimo} onChange={handleChange} required />
           <button type="submit">Salvar Material</button>
         </form>
       </div>

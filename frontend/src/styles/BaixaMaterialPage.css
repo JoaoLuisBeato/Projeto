@@ -1,0 +1,62 @@
+/* Container geral */
+.baixa-container {
+    padding: 40px;
+    background: linear-gradient(to right, #2c3e50, #4ca1af);
+    min-height: 100vh;
+    color: white;
+  }
+  
+  .baixa-container h2 {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  
+  /* Formulário */
+  .baixa-form {
+    background: white;
+    color: #333;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .baixa-form select,
+  .baixa-form input {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+  
+  .baixa-form button {
+    padding: 12px;
+    background-color: #4ca1af;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .baixa-form button:hover {
+    background-color: #357f8a;
+  }
+  
+  .mensagem-sucesso {
+    color: green;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .mensagem-erro {
+    color: red;
+    font-weight: bold;
+    text-align: center;
+  }
+  
