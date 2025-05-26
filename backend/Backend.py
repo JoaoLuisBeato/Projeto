@@ -127,5 +127,30 @@ def dar_baixa(id):
         cursor.close()
         conn.close()
 
+
+@app.route("/materiais/vencidos", methods=["GET"])
+def listar_materiais_vencidos():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT * FROM materiais
+            WHERE validade < CURDATE()
+            ORDER BY nome ASC
+        """)
+        vencidos = cursor.fetchall()
+
+        return jsonify(vencidos), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
 if __name__ == "__main__":
     app.run(debug=True)
