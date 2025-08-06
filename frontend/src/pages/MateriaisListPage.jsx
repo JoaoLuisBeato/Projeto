@@ -112,30 +112,7 @@ function MateriaisListPage() {
       <div className="main-content">
         <Header />
         <div className="materiais-container">
-          {/* Header da Página */}
-          <div className="page-header">
-            <div className="header-content">
-              <div className="header-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 12l2 2 4-4"/>
-                  <path d="M21 12c-1 0-2.4-.4-3.5-1.1-2.2-1.4-4.5-2.9-7.5-2.9s-5.3 1.5-7.5 2.9C2.4 11.6 1 12 0 12"/>
-                  <path d="M21 12c-1 0-2.4.4-3.5 1.1-2.2 1.4-4.5 2.9-7.5 2.9s-5.3-1.5-7.5-2.9C2.4 12.4 1 12 0 12"/>
-                </svg>
-              </div>
-              <div className="header-text">
-                <h1>Lista de Materiais</h1>
-                <p>Gerencie e visualize todos os materiais cadastrados no sistema</p>
-              </div>
-            </div>
-            <div className="header-actions">
-              <button className="btn-primary">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 5v14M5 12h14"/>
-                </svg>
-                <span>Novo Material</span>
-              </button>
-            </div>
-          </div>
+          
 
           {/* Filtros e Busca */}
           <div className="filters-section">

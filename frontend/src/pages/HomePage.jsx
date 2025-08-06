@@ -240,32 +240,6 @@ function HomePage() {
                       <p className="valor-label">Valor Total do Estoque</p>
                     </div>
                     
-                    <div className="valor-detalhes">
-                      <div className="detalhe-item">
-                        <div className="detalhe-icon">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M20 7L10 17l-5-5"/>
-                            <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-                          </svg>
-                        </div>
-                        <div className="detalhe-info">
-                          <span className="detalhe-valor">{valorEstoque.total_materiais}</span>
-                          <span className="detalhe-label">Materiais em Estoque</span>
-                        </div>
-                      </div>
-                      
-                      <div className="detalhe-item">
-                        <div className="detalhe-icon">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/>
-                          </svg>
-                        </div>
-                        <div className="detalhe-info">
-                          <span className="detalhe-valor">{formatCurrency(valorEstoque.preco_medio)}</span>
-                          <span className="detalhe-label">Preço Médio</span>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 )}
               </div>
