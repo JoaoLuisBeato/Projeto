@@ -93,6 +93,34 @@ def listar_materiais():
         conn.close()
 
 
+@app.route("/materiais/codigo/<codigo>", methods=["GET"])
+def buscar_material_por_codigo(codigo):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Busca por código ou nome (para flexibilidade)
+        cursor.execute("""
+            SELECT * FROM materiais 
+            WHERE id = %s OR nome LIKE %s OR fabricante LIKE %s
+            ORDER BY nome ASC
+        """, (codigo, f"%{codigo}%", f"%{codigo}%"))
+        
+        material = cursor.fetchone()
+
+        if material:
+            return jsonify(material), 200
+        else:
+            return jsonify({"error": "Material não encontrado"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
 @app.route("/materiais/<int:id>/baixa", methods=["PATCH"])
 def dar_baixa(id):
     data = request.json
@@ -149,6 +177,88 @@ def listar_materiais_vencidos():
     finally:
         cursor.close()
         conn.close()
+
+
+@app.route("/materiais/valor-estoque", methods=["GET"])
+def calcular_valor_estoque():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT 
+                SUM(estoque_atual * preco) as valor_total,
+                COUNT(*) as total_materiais,
+                AVG(preco) as preco_medio
+            FROM materiais
+            WHERE estoque_atual > 0
+        """)
+        
+        resultado = cursor.fetchone()
+        
+        if resultado:
+            valor_total = float(resultado['valor_total']) if resultado['valor_total'] else 0
+            total_materiais = int(resultado['total_materiais']) if resultado['total_materiais'] else 0
+            preco_medio = float(resultado['preco_medio']) if resultado['preco_medio'] else 0
+            
+            return jsonify({
+                "valor_total": valor_total,
+                "total_materiais": total_materiais,
+                "preco_medio": preco_medio
+            }), 200
+        else:
+            return jsonify({
+                "valor_total": 0,
+                "total_materiais": 0,
+                "preco_medio": 0
+            }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/materiais/stats", methods=["GET"])
+def obter_estatisticas():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT COUNT(*) AS total FROM materiais")
+        total = cursor.fetchone()["total"]
+
+        cursor.execute("SELECT COUNT(*) AS vencidos FROM materiais WHERE validade < CURDATE()")
+        vencidos = cursor.fetchone()["vencidos"]
+
+        cursor.execute("""
+            SELECT COUNT(*) AS proximos_vencimento FROM materiais 
+            WHERE validade >= CURDATE() AND validade <= CURDATE() + INTERVAL 30 DAY
+        """)
+        proximos_vencimento = cursor.fetchone()["proximos_vencimento"]
+
+        cursor.execute("""
+            SELECT COUNT(*) AS estoque_baixo FROM materiais 
+            WHERE estoque_atual <= estoque_minimo
+        """)
+        estoque_baixo = cursor.fetchone()["estoque_baixo"]
+
+        return jsonify({
+            "total": total,
+            "vencidos": vencidos,
+            "proximosVencimento": proximos_vencimento,
+            "estoqueBaixo": estoque_baixo
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
 
 
 
