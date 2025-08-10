@@ -131,7 +131,6 @@ function LoginPage() {
             {isLoading ? (
               <div className="loading-spinner">
                 <div className="spinner"></div>
-                <span>Entrando...</span>
               </div>
             ) : (
               <>
@@ -142,6 +141,7 @@ function LoginPage() {
               </>
             )}
           </button>
+
         </form>
 
         <div className="login-footer">

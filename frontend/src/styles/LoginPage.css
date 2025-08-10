@@ -200,13 +200,15 @@ html, body, #root {
 
 .form-input {
   width: 100%;
-  padding: 14px 16px 14px 48px;
+  padding: 14px 16px 14px 48px; /* espaço para o ícone */
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   font-size: 16px;
   background: white;
   font-weight: 500;
   position: relative;
+  z-index: 1;
+  padding-left: 48px !important;
 }
 
 .form-input[type="password"],
