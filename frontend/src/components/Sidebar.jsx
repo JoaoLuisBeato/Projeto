@@ -1,10 +1,11 @@
 // src/components/Sidebar.jsx
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "../styles/Sidebar.css";
 
 function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [
@@ -57,8 +58,15 @@ function Sidebar() {
     }
   ];
 
-  const isActive = (path) => {
-    return location.pathname === path;
+  const isActive = (path) => location.pathname === path;
+
+  const handleLogout = () => {
+    // Remove dados de sessão/localStorage se houver
+    localStorage.removeItem("token");
+    sessionStorage.clear();
+
+    // Redireciona para login
+    navigate("/");
   };
 
   return (
@@ -143,7 +151,11 @@ function Sidebar() {
             </div>
           )}
           
-          <button className="logout-btn" title="Sair">
+          <button 
+            className="logout-btn" 
+            title="Sair"
+            onClick={handleLogout}
+          >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
               <polyline points="16,17 21,12 16,7"/>
