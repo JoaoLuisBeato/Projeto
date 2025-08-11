@@ -146,7 +146,7 @@ function LoginPage() {
 
         <div className="login-footer">
           <p className="footer-text">
-            Sistema de Gestão de Materiais © 2024
+            Sistema de Gestão de Materiais © 2025
           </p>
         </div>
       </div>
