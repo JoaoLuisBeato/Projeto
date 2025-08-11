@@ -63,7 +63,7 @@ function CadastroMaterialPage() {
           });
 
           // Se o material tem arquivo PDF, mostrar o nome
-          if (material.arquivo_pdf) {
+          if (material.tem_pdf) {
             setPdfFileName("FISPQ já cadastrado");
           }
         } catch (error) {
@@ -92,6 +92,16 @@ function CadastroMaterialPage() {
         alert('Por favor, selecione apenas arquivos PDF.');
         e.target.value = '';
       }
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setPdfFile(null);
+    setPdfFileName("");
+    // Limpar o input file
+    const fileInput = document.getElementById('arquivo_pdf');
+    if (fileInput) {
+      fileInput.value = '';
     }
   };
 
@@ -150,7 +160,27 @@ function CadastroMaterialPage() {
       }
     } catch (error) {
       console.error(`Erro ao ${isEditing ? 'atualizar' : 'cadastrar'} material:`, error);
-      alert(`Erro ao ${isEditing ? 'atualizar' : 'cadastrar'} material. Verifique o console.`);
+      
+      // Mostrar mensagem de erro mais específica
+      let errorMessage = `Erro ao ${isEditing ? 'atualizar' : 'cadastrar'} material.`;
+      
+      if (error.response) {
+        // Erro do servidor com resposta
+        const serverError = error.response.data;
+        if (serverError.error) {
+          errorMessage = serverError.error;
+        } else {
+          errorMessage = `Erro do servidor: ${error.response.status} - ${error.response.statusText}`;
+        }
+      } else if (error.request) {
+        // Erro de rede
+        errorMessage = "Erro de conexão com o servidor. Verifique se o backend está rodando.";
+      } else {
+        // Outro tipo de erro
+        errorMessage = error.message || errorMessage;
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -484,11 +514,7 @@ function CadastroMaterialPage() {
                             <span>{pdfFileName}</span>
                             <button
                               type="button"
-                              onClick={() => {
-                                setPdfFile(null);
-                                setPdfFileName("");
-                                document.getElementById('arquivo_pdf').value = '';
-                              }}
+                              onClick={handleRemoveFile}
                               className="remove-file"
                             >
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

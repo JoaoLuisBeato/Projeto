@@ -69,8 +69,28 @@ def adicionar_material():
             if 'arquivo_pdf' in request.files:
                 file = request.files['arquivo_pdf']
                 if file and file.filename != '':
-                    # Ler o arquivo como bytes
-                    arquivo_pdf = file.read()
+                    # Validar se é realmente um PDF
+                    if file.content_type != 'application/pdf':
+                        return jsonify({"error": "Apenas arquivos PDF são permitidos"}), 400
+                    
+                    # Validar tamanho do arquivo (máximo 16MB)
+                    file.seek(0, 2)  # Ir para o final do arquivo
+                    file_size = file.tell()
+                    file.seek(0)  # Voltar para o início
+                    
+                    if file_size > 16 * 1024 * 1024:  # 16MB
+                        return jsonify({"error": "Arquivo muito grande. Tamanho máximo: 16MB"}), 400
+                    
+                    try:
+                        # Ler o arquivo como bytes
+                        arquivo_pdf = file.read()
+                        
+                        # Validar se o arquivo não está vazio
+                        if len(arquivo_pdf) == 0:
+                            return jsonify({"error": "Arquivo PDF está vazio"}), 400
+                            
+                    except Exception as e:
+                        return jsonify({"error": f"Erro ao ler arquivo PDF: {str(e)}"}), 400
         else:
             # Dados JSON (sem arquivo)
             data = request.json
@@ -120,9 +140,7 @@ def adicionar_material():
 @app.route("/materiaisList", methods=["GET"])
 def listar_materiais():
     try:
-        print("Iniciando listagem de materiais...")
         conn = get_connection()
-        print("Conexão com banco estabelecida")
         cursor = conn.cursor(dictionary=True)  # retorna dados em formato de dicionário
 
         # Consulta mais específica para evitar problemas com campos nulos
@@ -146,10 +164,8 @@ def listar_materiais():
             FROM materiais 
             ORDER BY nome ASC
         """
-        print(f"Executando query: {query}")
         cursor.execute(query)
         materiais = cursor.fetchall()
-        print(f"Encontrados {len(materiais)} materiais")
 
         # Converter os dados para garantir compatibilidade
         materiais_processados = []
@@ -171,18 +187,14 @@ def listar_materiais():
                 }
                 materiais_processados.append(material_processado)
             except Exception as e:
-                print(f"Erro ao processar material {material.get('id', 'N/A')}: {str(e)}")
                 # Continuar processando outros materiais
                 continue
 
-        print(f"Processados {len(materiais_processados)} materiais com sucesso")
         return jsonify(materiais_processados), 200
 
     except mysql.connector.Error as e:
-        print(f"Erro de banco de dados: {str(e)}")
         return jsonify({"error": f"Erro de conexão com banco de dados: {str(e)}"}), 500
     except Exception as e:
-        print(f"Erro ao listar materiais: {str(e)}")
         return jsonify({"error": f"Erro interno do servidor: {str(e)}"}), 500
 
     finally:
@@ -225,10 +237,29 @@ def buscar_material_por_id(id):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("SELECT * FROM materiais WHERE id = %s", (id,))
+        # Query modificada para não retornar o arquivo_pdf diretamente
+        query = """
+        SELECT id, codigo_material, nome, tipo, fabricante, quantidade, unidade, 
+               validade, preco, estoque_atual, estoque_minimo,
+               CASE WHEN arquivo_pdf IS NOT NULL THEN 1 ELSE 0 END as tem_pdf
+        FROM materiais WHERE id = %s
+        """
+        cursor.execute(query, (id,))
         material = cursor.fetchone()
 
         if material:
+            # Converter tipos de dados para garantir serialização JSON
+            if material['validade']:
+                material['validade'] = material['validade'].isoformat()
+            if material['preco'] is not None:
+                material['preco'] = float(material['preco'])
+            if material['quantidade'] is not None:
+                material['quantidade'] = float(material['quantidade'])
+            if material['estoque_atual'] is not None:
+                material['estoque_atual'] = float(material['estoque_atual'])
+            if material['estoque_minimo'] is not None:
+                material['estoque_minimo'] = float(material['estoque_minimo'])
+            
             return jsonify(material), 200
         else:
             return jsonify({"error": "Material não encontrado"}), 404
@@ -265,9 +296,12 @@ def atualizar_material(id):
             arquivo_pdf = None
             if 'arquivo_pdf' in request.files:
                 file = request.files['arquivo_pdf']
-                if file and file.filename != '':
-                    # Ler o arquivo como bytes
-                    arquivo_pdf = file.read()
+                if file and file.filename != '' and file.content_type == 'application/pdf':
+                    try:
+                        # Ler o arquivo como bytes
+                        arquivo_pdf = file.read()
+                    except Exception as e:
+                        return jsonify({"error": f"Erro ao ler arquivo PDF: {str(e)}"}), 400
         else:
             # Dados JSON (sem arquivo)
             data = request.json

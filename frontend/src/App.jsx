@@ -6,10 +6,7 @@ import MateriaisPage from "./pages/CadastroMaterialPage";
 import MateriaisListPage from "./pages/MateriaisListPage";
 import HomePage from "./pages/HomePage";
 import BaixaMaterialPage from "./pages/BaixaMaterialPage";
-
-
-
-
+import NovaSolicitacaoPage from "./pages/NovaSolicitacaoPage";
 
 function App() {
   return (
@@ -22,6 +19,7 @@ function App() {
         <Route path="/materiais/editar/:id" element={<MateriaisPage />} />
         <Route path="/materiaisList" element={<MateriaisListPage />} />
         <Route path="/baixa-material" element={<BaixaMaterialPage />} />
+        <Route path="/nova-solicitacao" element={<NovaSolicitacaoPage />} />
       </Routes>
     </Router>
   );

@@ -99,8 +99,9 @@ function HomePage() {
             <div className="stat-card">
               <div className="stat-icon total">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 7L10 17l-5-5"/>
-                  <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+                  <path d="M3 3h18v18H3z"/>
+                  <path d="M3 9h18"/>
+                  <path d="M9 21V9"/>
                 </svg>
               </div>
               <div className="stat-content">
@@ -113,7 +114,8 @@ function HomePage() {
               <div className="stat-icon vencidos">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12,6 12,12 16,14"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
                 </svg>
               </div>
               <div className="stat-content">
@@ -125,9 +127,8 @@ function HomePage() {
             <div className="stat-card">
               <div className="stat-icon alerta">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 002.18 3h16a2 2 0 002.18-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                  <line x1="12" y1="9" x2="12" y2="13"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12,6 12,12 16,14"/>
                 </svg>
               </div>
               <div className="stat-content">
@@ -139,9 +140,9 @@ function HomePage() {
             <div className="stat-card">
               <div className="stat-icon estoque">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 3h18v18H3z"/>
-                  <path d="M3 9h18"/>
-                  <path d="M9 21V9"/>
+                  <path d="M10.29 3.86L1.82 18a2 2 0 002.18 3h16a2 2 0 002.18-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
               </div>
               <div className="stat-content">

@@ -50,9 +50,16 @@ function Sidebar() {
       name: "Baixa de Material",
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M3 3h18v18H3z"/>
-          <path d="M3 9h18"/>
-          <path d="M9 21V9"/>
+          <path d="M12 5v14M19 12l-7 7-7-7"/>
+        </svg>
+      )
+    },
+    {
+      path: "/nova-solicitacao",
+      name: "Nova Solicitação",
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
         </svg>
       )
     }

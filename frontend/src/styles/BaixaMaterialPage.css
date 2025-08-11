@@ -9,7 +9,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
+  height: 100vh;
 }
 
 .baixa-container {
@@ -18,7 +19,8 @@
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
-  min-height: 100%;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* Header da página */
@@ -450,6 +452,12 @@
 @media (max-width: 768px) {
   .baixa-container {
     padding: 1rem;
+    overflow-y: auto;
+  }
+  
+  .main-content {
+    height: 100vh;
+    overflow: hidden;
   }
   
   .page-header {
