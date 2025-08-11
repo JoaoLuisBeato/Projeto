@@ -82,7 +82,7 @@ function Sidebar() {
           {!isCollapsed && (
             <div className="logo-text">
               <h2>LabManager</h2>
-              <p>Sistema de Gestão</p>
+              <p>Gestão de Materiais</p>
             </div>
           )}
         </div>

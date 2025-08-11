@@ -1,6 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from db import get_connection
+import csv
+import io
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -112,6 +115,93 @@ def buscar_material_por_codigo(codigo):
             return jsonify(material), 200
         else:
             return jsonify({"error": "Material não encontrado"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/materiais/<int:id>", methods=["GET"])
+def buscar_material_por_id(id):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT * FROM materiais WHERE id = %s", (id,))
+        material = cursor.fetchone()
+
+        if material:
+            return jsonify(material), 200
+        else:
+            return jsonify({"error": "Material não encontrado"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/materiais/<int:id>", methods=["PUT"])
+def atualizar_material(id):
+    data = request.json
+
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        query = """
+        UPDATE materiais 
+        SET nome = %s, tipo = %s, fabricante = %s, quantidade = %s, unidade = %s, 
+            validade = %s, preco = %s, estoque_atual = %s, estoque_minimo = %s
+        WHERE id = %s
+        """
+        values = (
+            data["nome"],
+            data["tipo"], 
+            data["fabricante"],
+            data["quantidade"], 
+            data["unidade"], 
+            data["validade"], 
+            data["preco"],
+            data["estoque_atual"], 
+            data["estoque_minimo"],
+            id
+        )
+
+        cursor.execute(query, values)
+        conn.commit()
+
+        return jsonify({"message": "Material atualizado com sucesso!"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/materiais/<int:id>", methods=["DELETE"])
+def excluir_material(id):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Verifica se o material existe
+        cursor.execute("SELECT id FROM materiais WHERE id = %s", (id,))
+        if not cursor.fetchone():
+            return jsonify({"error": "Material não encontrado"}), 404
+
+        # Exclui o material
+        cursor.execute("DELETE FROM materiais WHERE id = %s", (id,))
+        conn.commit()
+
+        return jsonify({"message": "Material excluído com sucesso!"}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -251,6 +341,68 @@ def obter_estatisticas():
             "proximosVencimento": proximos_vencimento,
             "estoqueBaixo": estoque_baixo
         }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/materiais/exportar-csv", methods=["GET"])
+def exportar_materiais_csv():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT * FROM materiais ORDER BY nome ASC")
+        materiais = cursor.fetchall()
+
+        # Criar um buffer de memória para o CSV
+        output = io.StringIO()
+        writer = csv.writer(output, delimiter=';', quoting=csv.QUOTE_ALL)
+
+        # Cabeçalho do CSV
+        writer.writerow([
+            'ID', 'Nome', 'Tipo', 'Fabricante', 'Quantidade', 'Unidade', 
+            'Validade', 'Preço (R$)', 'Estoque Atual', 'Estoque Mínimo'
+        ])
+
+        # Dados dos materiais
+        for material in materiais:
+            # Formatar data
+            data_formatada = material['validade'].strftime('%d/%m/%Y') if material['validade'] else ''
+            
+            # Formatar preço
+            preco_formatado = f"R$ {material['preco']:.2f}".replace('.', ',') if material['preco'] else ''
+            
+            writer.writerow([
+                material['id'],
+                material['nome'],
+                material['tipo'],
+                material['fabricante'],
+                material['quantidade'],
+                material['unidade'],
+                data_formatada,
+                preco_formatado,
+                material['estoque_atual'],
+                material['estoque_minimo']
+            ])
+
+        # Configurar o buffer para leitura
+        output.seek(0)
+        
+        # Nome do arquivo com timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'materiais_laboratorio_{timestamp}.csv'
+
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8-sig')),  # UTF-8 com BOM para Excel
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=filename
+        )
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

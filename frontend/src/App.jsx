@@ -19,6 +19,7 @@ function App() {
         <Route path="/home" element={<HomePage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/materiais" element={<MateriaisPage />} />
+        <Route path="/materiais/editar/:id" element={<MateriaisPage />} />
         <Route path="/materiaisList" element={<MateriaisListPage />} />
         <Route path="/baixa-material" element={<BaixaMaterialPage />} />
       </Routes>

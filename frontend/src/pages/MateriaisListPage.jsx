@@ -1,17 +1,21 @@
 // src/pages/MateriaisListPage.jsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import "../styles/MateriaisListPage.css";
 
 function MateriaisListPage() {
+  const navigate = useNavigate();
   const [materiais, setMateriais] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("todos");
   const [sortBy, setSortBy] = useState("nome");
+  const [deletingId, setDeletingId] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const fetchMateriais = async () => {
@@ -106,6 +110,75 @@ function MateriaisListPage() {
     return { type: "ok", label: "OK", color: "#22c55e" };
   };
 
+  // Função para editar material
+  const handleEdit = (materialId) => {
+    navigate(`/materiais/editar/${materialId}`);
+  };
+
+  // Função para excluir material
+  const handleDelete = async (materialId) => {
+    if (!window.confirm("Tem certeza que deseja excluir este material? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    try {
+      setDeletingId(materialId);
+      await axios.delete(`http://localhost:5000/materiais/${materialId}`);
+      
+      // Atualiza a lista removendo o material excluído
+      setMateriais(prevMateriais => prevMateriais.filter(material => material.id !== materialId));
+      
+      // Mostra mensagem de sucesso
+      alert("Material excluído com sucesso!");
+    } catch (error) {
+      console.error("Erro ao excluir material:", error);
+      alert("Erro ao excluir material. Verifique o console.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Função para exportar materiais para CSV
+  const handleExport = async () => {
+    try {
+      setExporting(true);
+      
+      // Fazer requisição para o endpoint de exportação
+      const response = await axios.get('http://localhost:5000/materiais/exportar-csv', {
+        responseType: 'blob' // Importante para arquivos binários
+      });
+      
+      // Criar URL para download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Extrair nome do arquivo do header Content-Disposition
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'materiais_laboratorio.csv';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      // Mostra mensagem de sucesso
+      alert("Arquivo CSV exportado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao exportar materiais:", error);
+      alert("Erro ao exportar materiais. Verifique o console.");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="materiais-layout">
       <Sidebar />
@@ -152,6 +225,27 @@ function MateriaisListPage() {
                 <option value="validade">Ordenar por Validade</option>
                 <option value="preco">Ordenar por Preço</option>
               </select>
+              <button 
+                className="btn-export"
+                onClick={handleExport}
+                disabled={exporting}
+              >
+                {exporting ? (
+                  <>
+                    <div className="loading-spinner"></div>
+                    <span>Exportando...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="7,10 12,15 17,10"/>
+                      <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    <span>Exportar CSV</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
@@ -312,21 +406,37 @@ function MateriaisListPage() {
                       </div>
                       
                       <div className="material-actions">
-                        <button className="btn-action edit">
+                        <button 
+                          className="btn-action edit"
+                          onClick={() => handleEdit(material.id)}
+                        >
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
                             <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
                           </svg>
                           <span>Editar</span>
                         </button>
-                        <button className="btn-action delete">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3,6 5,6 21,6"/>
-                            <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
-                            <line x1="10" y1="11" x2="10" y2="17"/>
-                            <line x1="14" y1="11" x2="14" y2="17"/>
-                          </svg>
-                          <span>Excluir</span>
+                        <button 
+                          className="btn-action delete"
+                          onClick={() => handleDelete(material.id)}
+                          disabled={deletingId === material.id}
+                        >
+                          {deletingId === material.id ? (
+                            <>
+                              <div className="loading-spinner"></div>
+                              <span>Excluindo...</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3,6 5,6 21,6"/>
+                                <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
+                                <line x1="10" y1="11" x2="10" y2="17"/>
+                                <line x1="14" y1="11" x2="14" y2="17"/>
+                              </svg>
+                              <span>Excluir</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     </div>

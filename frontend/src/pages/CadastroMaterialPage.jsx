@@ -1,10 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import "../styles/CadastroMaterialPage.css";
 
 function CadastroMaterialPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const isEditing = !!id;
+
   const [form, setForm] = useState({
     nome: "",
     tipo: "",
@@ -19,6 +24,7 @@ function CadastroMaterialPage() {
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [loadingData, setLoadingData] = useState(false);
 
   const unidades = [
     "ml", "L", "g", "kg", "mg", "un", "pct", "m", "cm", "mm"
@@ -27,6 +33,41 @@ function CadastroMaterialPage() {
   const tipos = [
     "Reagente", "Padrão", "Solvente", "Ácido", "Base", "Indicador", "Enzima", "Anticorpo", "Meio de Cultura", "Outro"
   ];
+
+  // Carregar dados do material se estiver editando
+  useEffect(() => {
+    if (isEditing) {
+      const fetchMaterial = async () => {
+        try {
+          setLoadingData(true);
+          const response = await axios.get(`http://localhost:5000/materiais/${id}`);
+          const material = response.data;
+          
+          // Formatar a data para o formato aceito pelo input date
+          const dataFormatada = material.validade ? new Date(material.validade).toISOString().split('T')[0] : '';
+          
+          setForm({
+            nome: material.nome || "",
+            tipo: material.tipo || "",
+            fabricante: material.fabricante || "",
+            quantidade: material.quantidade || "",
+            unidade: material.unidade || "",
+            validade: dataFormatada,
+            preco: material.preco || "",
+            estoque_atual: material.estoque_atual || "",
+            estoque_minimo: material.estoque_minimo || ""
+          });
+        } catch (error) {
+          console.error("Erro ao carregar material:", error);
+          alert("Erro ao carregar dados do material. Verifique o console.");
+        } finally {
+          setLoadingData(false);
+        }
+      };
+
+      fetchMaterial();
+    }
+  }, [id, isEditing]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -37,25 +78,34 @@ function CadastroMaterialPage() {
     setLoading(true);
 
     try {
-      await axios.post("http://localhost:5000/materiais", form);
-      setSuccess(true);
-      setForm({
-        nome: "",
-        tipo: "",
-        fabricante: "",
-        quantidade: "",
-        unidade: "",
-        validade: "",
-        preco: "",
-        estoque_atual: "",
-        estoque_minimo: ""
-      });
-      
-      // Reset success message after 3 seconds
-      setTimeout(() => setSuccess(false), 3000);
+      if (isEditing) {
+        await axios.put(`http://localhost:5000/materiais/${id}`, form);
+        setSuccess(true);
+        setTimeout(() => {
+          setSuccess(false);
+          navigate('/materiaisList');
+        }, 2000);
+      } else {
+        await axios.post("http://localhost:5000/materiais", form);
+        setSuccess(true);
+        setForm({
+          nome: "",
+          tipo: "",
+          fabricante: "",
+          quantidade: "",
+          unidade: "",
+          validade: "",
+          preco: "",
+          estoque_atual: "",
+          estoque_minimo: ""
+        });
+        
+        // Reset success message after 3 seconds
+        setTimeout(() => setSuccess(false), 3000);
+      }
     } catch (error) {
-      console.error("Erro ao cadastrar material:", error);
-      alert("Erro ao cadastrar material. Verifique o console.");
+      console.error(`Erro ao ${isEditing ? 'atualizar' : 'cadastrar'} material:`, error);
+      alert(`Erro ao ${isEditing ? 'atualizar' : 'cadastrar'} material. Verifique o console.`);
     } finally {
       setLoading(false);
     }
@@ -91,25 +141,32 @@ function CadastroMaterialPage() {
                 </svg>
               </div>
               <div className="header-text">
-                <h1>Cadastrar Material</h1>
-                <p>Adicione um novo material ao sistema de gestão</p>
+                <h1>{isEditing ? 'Editar Material' : 'Cadastrar Material'}</h1>
+                <p>{isEditing ? 'Edite as informações do material' : 'Adicione um novo material ao sistema de gestão'}</p>
               </div>
             </div>
           </div>
 
           {/* Card do Formulário */}
           <div className="form-card">
+            {loadingData && (
+              <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Carregando dados do material...</p>
+              </div>
+            )}
+            
             {success && (
               <div className="success-message">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                   <polyline points="22,4 12,14.01 9,11.01"/>
                 </svg>
-                <span>Material cadastrado com sucesso!</span>
+                <span>Material {isEditing ? 'atualizado' : 'cadastrado'} com sucesso!</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="material-form">
+            <form onSubmit={handleSubmit} className="material-form" style={{ opacity: loadingData ? 0.5 : 1, pointerEvents: loadingData ? 'none' : 'auto' }}>
               {/* Informações Básicas */}
               <div className="form-section">
                 <div className="section-header">
@@ -328,12 +385,12 @@ function CadastroMaterialPage() {
                 <button 
                   type="submit" 
                   className={`btn-primary ${loading ? 'loading' : ''}`}
-                  disabled={loading}
+                  disabled={loading || loadingData}
                 >
                   {loading ? (
                     <>
                       <div className="loading-spinner"></div>
-                      <span>Cadastrando...</span>
+                      <span>{isEditing ? 'Atualizando...' : 'Cadastrando...'}</span>
                     </>
                   ) : (
                     <>
@@ -341,7 +398,7 @@ function CadastroMaterialPage() {
                         <path d="M20 7L10 17l-5-5"/>
                         <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
                       </svg>
-                      <span>Cadastrar Material</span>
+                      <span>{isEditing ? 'Atualizar Material' : 'Cadastrar Material'}</span>
                     </>
                   )}
                 </button>
