@@ -432,12 +432,28 @@
   line-height: 1.2;
 }
 
+.material-subtitle {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .material-type {
   font-size: 10px;
   color: #6b7280;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+}
+
+.material-code {
+  font-size: 9px;
+  color: #9ca3af;
+  font-weight: 500;
+  background: rgba(107, 114, 128, 0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+  align-self: flex-start;
 }
 
 .material-status {
@@ -525,13 +541,26 @@
 }
 
 .btn-action.delete:hover {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: #ef4444;
+  background: #fef2f2;
+  color: #dc2626;
+  transform: translateY(-2px);
+}
+
+.btn-action.pdf {
+  background: #f8fafc;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+}
+
+.btn-action.pdf:hover {
+  background: #fef2f2;
+  color: #dc2626;
+  transform: translateY(-2px);
 }
 
 .btn-action svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .btn-action .loading-spinner {

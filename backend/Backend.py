@@ -4,9 +4,14 @@ from db import get_connection
 import csv
 import io
 from datetime import datetime
+import os
+import mysql.connector
 
 app = Flask(__name__)
 CORS(app)
+
+# Configuração para upload de arquivos
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -41,27 +46,62 @@ def login():
 
 @app.route("/materiais", methods=["POST"])
 def adicionar_material():
-    data = request.json
-
     try:
         conn = get_connection()
         cursor = conn.cursor()
 
-        query = """
-        INSERT INTO materiais (nome, tipo, fabricante, quantidade, unidade, validade, preco, estoque_atual, estoque_minimo)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        # Verificar se é um formulário multipart (com arquivo)
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            # Obter dados do formulário
+            codigo_material = request.form.get("codigo_material", "")
+            nome = request.form.get("nome")
+            tipo = request.form.get("tipo")
+            fabricante = request.form.get("fabricante")
+            quantidade = request.form.get("quantidade")
+            unidade = request.form.get("unidade")
+            validade = request.form.get("validade")
+            preco = request.form.get("preco")
+            estoque_atual = request.form.get("estoque_atual")
+            estoque_minimo = request.form.get("estoque_minimo")
+            
+            # Obter arquivo PDF se existir
+            arquivo_pdf = None
+            if 'arquivo_pdf' in request.files:
+                file = request.files['arquivo_pdf']
+                if file and file.filename != '':
+                    # Ler o arquivo como bytes
+                    arquivo_pdf = file.read()
+        else:
+            # Dados JSON (sem arquivo)
+            data = request.json
+            codigo_material = data.get("codigo_material", "")
+            nome = data.get("nome")
+            tipo = data.get("tipo")
+            fabricante = data.get("fabricante")
+            quantidade = data.get("quantidade")
+            unidade = data.get("unidade")
+            validade = data.get("validade")
+            preco = data.get("preco")
+            estoque_atual = data.get("estoque_atual")
+            estoque_minimo = data.get("estoque_minimo")
+            arquivo_pdf = None
 
+        query = """
+        INSERT INTO materiais (codigo_material, nome, tipo, fabricante, quantidade, unidade, validade, preco, estoque_atual, estoque_minimo, arquivo_pdf)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         values = (
-            data["nome"],
-            data["tipo"], 
-            data["fabricante"],
-            data["quantidade"], 
-            data["unidade"], 
-            data["validade"], 
-            data["preco"],
-            data["estoque_atual"], 
-            data["estoque_minimo"]
+            codigo_material,
+            nome,
+            tipo, 
+            fabricante,
+            quantidade, 
+            unidade, 
+            validade, 
+            preco,
+            estoque_atual, 
+            estoque_minimo,
+            arquivo_pdf
         )
 
         cursor.execute(query, values)
@@ -80,20 +120,76 @@ def adicionar_material():
 @app.route("/materiaisList", methods=["GET"])
 def listar_materiais():
     try:
+        print("Iniciando listagem de materiais...")
         conn = get_connection()
+        print("Conexão com banco estabelecida")
         cursor = conn.cursor(dictionary=True)  # retorna dados em formato de dicionário
 
-        cursor.execute("SELECT * FROM materiais ORDER BY nome ASC")
+        # Consulta mais específica para evitar problemas com campos nulos
+        query = """
+            SELECT 
+                id, 
+                codigo_material, 
+                nome, 
+                tipo, 
+                fabricante, 
+                quantidade, 
+                unidade, 
+                validade, 
+                preco, 
+                estoque_atual, 
+                estoque_minimo,
+                CASE 
+                    WHEN arquivo_pdf IS NOT NULL THEN 1 
+                    ELSE 0 
+                END as tem_pdf
+            FROM materiais 
+            ORDER BY nome ASC
+        """
+        print(f"Executando query: {query}")
+        cursor.execute(query)
         materiais = cursor.fetchall()
+        print(f"Encontrados {len(materiais)} materiais")
 
-        return jsonify(materiais), 200
+        # Converter os dados para garantir compatibilidade
+        materiais_processados = []
+        for material in materiais:
+            try:
+                material_processado = {
+                    'id': material['id'],
+                    'codigo_material': material['codigo_material'] if material['codigo_material'] else '',
+                    'nome': material['nome'] if material['nome'] else '',
+                    'tipo': material['tipo'] if material['tipo'] else '',
+                    'fabricante': material['fabricante'] if material['fabricante'] else '',
+                    'quantidade': float(material['quantidade']) if material['quantidade'] else 0,
+                    'unidade': material['unidade'] if material['unidade'] else '',
+                    'validade': material['validade'].isoformat() if material['validade'] else None,
+                    'preco': float(material['preco']) if material['preco'] else 0,
+                    'estoque_atual': float(material['estoque_atual']) if material['estoque_atual'] else 0,
+                    'estoque_minimo': float(material['estoque_minimo']) if material['estoque_minimo'] else 0,
+                    'tem_pdf': bool(material['tem_pdf'])
+                }
+                materiais_processados.append(material_processado)
+            except Exception as e:
+                print(f"Erro ao processar material {material.get('id', 'N/A')}: {str(e)}")
+                # Continuar processando outros materiais
+                continue
 
+        print(f"Processados {len(materiais_processados)} materiais com sucesso")
+        return jsonify(materiais_processados), 200
+
+    except mysql.connector.Error as e:
+        print(f"Erro de banco de dados: {str(e)}")
+        return jsonify({"error": f"Erro de conexão com banco de dados: {str(e)}"}), 500
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Erro ao listar materiais: {str(e)}")
+        return jsonify({"error": f"Erro interno do servidor: {str(e)}"}), 500
 
     finally:
-        cursor.close()
-        conn.close()
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
 
 
 @app.route("/materiais/codigo/<codigo>", methods=["GET"])
@@ -102,13 +198,12 @@ def buscar_material_por_codigo(codigo):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # Busca por código ou nome (para flexibilidade)
         cursor.execute("""
             SELECT * FROM materiais 
-            WHERE id = %s OR nome LIKE %s OR fabricante LIKE %s
+            WHERE codigo_material = %s OR id = %s OR nome LIKE %s OR fabricante LIKE %s
             ORDER BY nome ASC
-        """, (codigo, f"%{codigo}%", f"%{codigo}%"))
-        
+        """, (codigo, codigo, f"%{codigo}%", f"%{codigo}%"))
+
         material = cursor.fetchone()
 
         if material:
@@ -148,35 +243,128 @@ def buscar_material_por_id(id):
 
 @app.route("/materiais/<int:id>", methods=["PUT"])
 def atualizar_material(id):
-    data = request.json
-
     try:
         conn = get_connection()
         cursor = conn.cursor()
 
-        query = """
-        UPDATE materiais 
-        SET nome = %s, tipo = %s, fabricante = %s, quantidade = %s, unidade = %s, 
-            validade = %s, preco = %s, estoque_atual = %s, estoque_minimo = %s
-        WHERE id = %s
-        """
-        values = (
-            data["nome"],
-            data["tipo"], 
-            data["fabricante"],
-            data["quantidade"], 
-            data["unidade"], 
-            data["validade"], 
-            data["preco"],
-            data["estoque_atual"], 
-            data["estoque_minimo"],
-            id
-        )
+        # Verificar se é um formulário multipart (com arquivo)
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            # Obter dados do formulário
+            codigo_material = request.form.get("codigo_material", "")
+            nome = request.form.get("nome")
+            tipo = request.form.get("tipo")
+            fabricante = request.form.get("fabricante")
+            quantidade = request.form.get("quantidade")
+            unidade = request.form.get("unidade")
+            validade = request.form.get("validade")
+            preco = request.form.get("preco")
+            estoque_atual = request.form.get("estoque_atual")
+            estoque_minimo = request.form.get("estoque_minimo")
+            
+            # Obter arquivo PDF se existir
+            arquivo_pdf = None
+            if 'arquivo_pdf' in request.files:
+                file = request.files['arquivo_pdf']
+                if file and file.filename != '':
+                    # Ler o arquivo como bytes
+                    arquivo_pdf = file.read()
+        else:
+            # Dados JSON (sem arquivo)
+            data = request.json
+            codigo_material = data.get("codigo_material", "")
+            nome = data.get("nome")
+            tipo = data.get("tipo")
+            fabricante = data.get("fabricante")
+            quantidade = data.get("quantidade")
+            unidade = data.get("unidade")
+            validade = data.get("validade")
+            preco = data.get("preco")
+            estoque_atual = data.get("estoque_atual")
+            estoque_minimo = data.get("estoque_minimo")
+            arquivo_pdf = None
+
+        # Se há arquivo PDF, atualizar incluindo o arquivo
+        if arquivo_pdf is not None:
+            query = """
+            UPDATE materiais 
+            SET codigo_material = %s, nome = %s, tipo = %s, fabricante = %s, quantidade = %s, unidade = %s, 
+                validade = %s, preco = %s, estoque_atual = %s, estoque_minimo = %s, arquivo_pdf = %s
+            WHERE id = %s
+            """
+            values = (
+                codigo_material,
+                nome,
+                tipo, 
+                fabricante,
+                quantidade, 
+                unidade, 
+                validade, 
+                preco,
+                estoque_atual, 
+                estoque_minimo,
+                arquivo_pdf,
+                id
+            )
+        else:
+            # Atualizar sem modificar o arquivo PDF
+            query = """
+            UPDATE materiais 
+            SET codigo_material = %s, nome = %s, tipo = %s, fabricante = %s, quantidade = %s, unidade = %s, 
+                validade = %s, preco = %s, estoque_atual = %s, estoque_minimo = %s
+            WHERE id = %s
+            """
+            values = (
+                codigo_material,
+                nome,
+                tipo, 
+                fabricante,
+                quantidade, 
+                unidade, 
+                validade, 
+                preco,
+                estoque_atual, 
+                estoque_minimo,
+                id
+            )
 
         cursor.execute(query, values)
         conn.commit()
 
-        return jsonify({"message": "Material atualizado com sucesso!"}), 200
+        if cursor.rowcount > 0:
+            return jsonify({"message": "Material atualizado com sucesso!"}), 200
+        else:
+            return jsonify({"error": "Material não encontrado"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/materiais/<int:id>/pdf", methods=["GET"])
+def download_pdf(id):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT arquivo_pdf FROM materiais WHERE id = %s", (id,))
+        result = cursor.fetchone()
+
+        if result and result['arquivo_pdf']:
+            # Criar um buffer de memória com o arquivo PDF
+            pdf_buffer = io.BytesIO(result['arquivo_pdf'])
+            pdf_buffer.seek(0)
+            
+            return send_file(
+                pdf_buffer,
+                mimetype='application/pdf',
+                as_attachment=True,
+                download_name=f'fispq_material_{id}.pdf'
+            )
+        else:
+            return jsonify({"error": "Arquivo PDF não encontrado"}), 404
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -365,7 +553,7 @@ def exportar_materiais_csv():
 
         # Cabeçalho do CSV
         writer.writerow([
-            'ID', 'Nome', 'Tipo', 'Fabricante', 'Quantidade', 'Unidade', 
+            'ID', 'Código do Material', 'Nome', 'Tipo', 'Fabricante', 'Quantidade', 'Unidade', 
             'Validade', 'Preço (R$)', 'Estoque Atual', 'Estoque Mínimo'
         ])
 
@@ -379,6 +567,7 @@ def exportar_materiais_csv():
             
             writer.writerow([
                 material['id'],
+                material.get('codigo_material', ''),
                 material['nome'],
                 material['tipo'],
                 material['fabricante'],

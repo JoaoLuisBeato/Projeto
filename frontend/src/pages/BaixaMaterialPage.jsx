@@ -12,7 +12,6 @@ function BaixaMaterialPage() {
   const [mensagem, setMensagem] = useState("");
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
-  const [scanning, setScanning] = useState(false);
 
   // Função para buscar material por código
   const buscarMaterial = async (codigo) => {
@@ -34,18 +33,6 @@ function BaixaMaterialPage() {
     }
   };
 
-  // Função para simular escaneamento (pode ser integrada com scanner real)
-  const simularEscaneamento = () => {
-    setScanning(true);
-    // Simula o tempo de escaneamento
-    setTimeout(() => {
-      const codigoSimulado = Math.floor(Math.random() * 1000) + 1;
-      setCodigoMaterial(codigoSimulado.toString());
-      buscarMaterial(codigoSimulado.toString());
-      setScanning(false);
-    }, 2000);
-  };
-
   // Função para dar baixa no material
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,7 +49,7 @@ function BaixaMaterialPage() {
         quantidade: parseFloat(quantidade)
       });
 
-      setMensagem(`Baixa realizada com sucesso! Novo estoque: ${response.data.estoque_atual} ${materialEncontrado.unidade}`);
+      setMensagem(`Baixa realizada com sucesso! Novo estoque: ${response.data.estoque_atual} unidades`);
       setQuantidade("");
       setMaterialEncontrado(null);
       setCodigoMaterial("");
@@ -102,17 +89,17 @@ function BaixaMaterialPage() {
               </div>
               <div className="header-text">
                 <h1>Dar Baixa de Material</h1>
-                <p>Escaneie ou digite o código do material para dar baixa no estoque</p>
+                <p>Digite o código do material para dar baixa no estoque</p>
               </div>
             </div>
           </div>
 
-          {/* Área de Escaneamento */}
+          {/* Área de Busca */}
           <div className="scan-section">
             <div className="scan-container">
               <div className="scan-header">
-                <h2>Escaneamento de Material</h2>
-                <p>Digite o código ou use o scanner</p>
+                <h2>Busca de Material</h2>
+                <p>Digite o código do material para localizar</p>
               </div>
 
               <div className="scan-input-group">
@@ -125,7 +112,7 @@ function BaixaMaterialPage() {
                   </svg>
                   <input
                     type="text"
-                    placeholder="Digite o código do material..."
+                    placeholder="Digite o código do material (ex: AC001, REAG001)..."
                     value={codigoMaterial}
                     onChange={(e) => setCodigoMaterial(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && buscarMaterial(codigoMaterial)}
@@ -152,38 +139,6 @@ function BaixaMaterialPage() {
                   Buscar
                 </button>
               </div>
-
-              <div className="scan-actions">
-                <button 
-                  onClick={simularEscaneamento}
-                  disabled={scanning}
-                  className="btn-scan"
-                >
-                  {scanning ? (
-                    <>
-                      <svg className="scanning-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                        <path d="M21 3v5h-5"/>
-                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                        <path d="M3 21v-5h5"/>
-                      </svg>
-                      Escaneando...
-                    </>
-                  ) : (
-                    <>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
-                        <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
-                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
-                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
-                        <path d="M7 3v18"/>
-                        <path d="M17 3v18"/>
-                      </svg>
-                      Simular Escaneamento
-                    </>
-                  )}
-                </button>
-              </div>
             </div>
           </div>
 
@@ -202,6 +157,9 @@ function BaixaMaterialPage() {
                     <h3>{materialEncontrado.nome}</h3>
                     <p className="material-fabricante">{materialEncontrado.fabricante}</p>
                     <p className="material-tipo">{materialEncontrado.tipo}</p>
+                    {materialEncontrado.codigo_material && (
+                      <p className="material-code">Código: {materialEncontrado.codigo_material}</p>
+                    )}
                   </div>
                   <div className="material-status">
                     <span className={`status-badge ${materialEncontrado.estoque_atual <= materialEncontrado.estoque_minimo ? 'low' : 'ok'}`}>
@@ -214,11 +172,11 @@ function BaixaMaterialPage() {
                   <div className="detail-row">
                     <div className="detail-item">
                       <span className="detail-label">Estoque Atual:</span>
-                      <span className="detail-value">{materialEncontrado.estoque_atual} {materialEncontrado.unidade}</span>
+                      <span className="detail-value">{materialEncontrado.estoque_atual} unidades</span>
                     </div>
                     <div className="detail-item">
                       <span className="detail-label">Estoque Mínimo:</span>
-                      <span className="detail-value">{materialEncontrado.estoque_minimo} {materialEncontrado.unidade}</span>
+                      <span className="detail-value">{materialEncontrado.estoque_minimo} unidades</span>
                     </div>
                   </div>
                   <div className="detail-row">
@@ -236,24 +194,24 @@ function BaixaMaterialPage() {
                 {/* Formulário de Baixa */}
                 <form onSubmit={handleSubmit} className="baixa-form">
                   <div className="form-group">
-                    <label htmlFor="quantidade">Quantidade para Baixa:</label>
+                    <label htmlFor="quantidade">Quantidade de Unidades para Baixa:</label>
                     <div className="input-group">
                       <input
                         type="number"
                         id="quantidade"
-                        placeholder="Digite a quantidade"
+                        placeholder="Digite a quantidade de unidades"
                         value={quantidade}
                         onChange={(e) => setQuantidade(e.target.value)}
-                        min="0.01"
+                        min="1"
                         max={materialEncontrado.estoque_atual}
-                        step="0.01"
+                        step="1"
                         required
                         className="quantidade-input"
                       />
-                      <span className="input-suffix">{materialEncontrado.unidade}</span>
+                      <span className="input-suffix">unidades</span>
                     </div>
                     <small className="input-help">
-                      Máximo disponível: {materialEncontrado.estoque_atual} {materialEncontrado.unidade}
+                      Máximo disponível: {materialEncontrado.estoque_atual} unidades
                     </small>
                   </div>
 
@@ -271,7 +229,7 @@ function BaixaMaterialPage() {
                     </button>
                     <button 
                       type="submit" 
-                      disabled={!quantidade || parseFloat(quantidade) > materialEncontrado.estoque_atual}
+                      disabled={!quantidade || parseInt(quantidade) > materialEncontrado.estoque_atual || parseInt(quantidade) < 1}
                       className="btn-primary"
                     >
                       Confirmar Baixa

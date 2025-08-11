@@ -11,6 +11,7 @@ function CadastroMaterialPage() {
   const isEditing = !!id;
 
   const [form, setForm] = useState({
+    codigo_material: "",
     nome: "",
     tipo: "",
     fabricante: "",
@@ -22,6 +23,8 @@ function CadastroMaterialPage() {
     estoque_minimo: ""
   });
 
+  const [pdfFile, setPdfFile] = useState(null);
+  const [pdfFileName, setPdfFileName] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
@@ -47,6 +50,7 @@ function CadastroMaterialPage() {
           const dataFormatada = material.validade ? new Date(material.validade).toISOString().split('T')[0] : '';
           
           setForm({
+            codigo_material: material.codigo_material || "",
             nome: material.nome || "",
             tipo: material.tipo || "",
             fabricante: material.fabricante || "",
@@ -57,6 +61,11 @@ function CadastroMaterialPage() {
             estoque_atual: material.estoque_atual || "",
             estoque_minimo: material.estoque_minimo || ""
           });
+
+          // Se o material tem arquivo PDF, mostrar o nome
+          if (material.arquivo_pdf) {
+            setPdfFileName("FISPQ já cadastrado");
+          }
         } catch (error) {
           console.error("Erro ao carregar material:", error);
           alert("Erro ao carregar dados do material. Verifique o console.");
@@ -73,22 +82,56 @@ function CadastroMaterialPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.type === 'application/pdf') {
+        setPdfFile(file);
+        setPdfFileName(file.name);
+      } else {
+        alert('Por favor, selecione apenas arquivos PDF.');
+        e.target.value = '';
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      const formData = new FormData();
+      
+      // Adicionar todos os campos do formulário
+      Object.keys(form).forEach(key => {
+        formData.append(key, form[key]);
+      });
+
+      // Adicionar arquivo PDF se existir
+      if (pdfFile) {
+        formData.append('arquivo_pdf', pdfFile);
+      }
+
       if (isEditing) {
-        await axios.put(`http://localhost:5000/materiais/${id}`, form);
+        await axios.put(`http://localhost:5000/materiais/${id}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
         setSuccess(true);
         setTimeout(() => {
           setSuccess(false);
           navigate('/materiaisList');
         }, 2000);
       } else {
-        await axios.post("http://localhost:5000/materiais", form);
+        await axios.post("http://localhost:5000/materiais", formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
         setSuccess(true);
         setForm({
+          codigo_material: "",
           nome: "",
           tipo: "",
           fabricante: "",
@@ -99,6 +142,8 @@ function CadastroMaterialPage() {
           estoque_atual: "",
           estoque_minimo: ""
         });
+        setPdfFile(null);
+        setPdfFileName("");
         
         // Reset success message after 3 seconds
         setTimeout(() => setSuccess(false), 3000);
@@ -175,6 +220,28 @@ function CadastroMaterialPage() {
                 </div>
                 
                 <div className="form-grid">
+                  <div className="form-group">
+                    <label htmlFor="codigo_material">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+                        <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                        <path d="M7 3v18"/>
+                        <path d="M17 3v18"/>
+                      </svg>
+                      Código do Material
+                    </label>
+                    <input
+                      id="codigo_material"
+                      name="codigo_material"
+                      type="text"
+                      placeholder="Ex: AC001, REAG001"
+                      value={form.codigo_material}
+                      onChange={handleChange}
+                    />
+                  </div>
+
                   <div className="form-group">
                     <label htmlFor="nome">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -375,6 +442,74 @@ function CadastroMaterialPage() {
                       onChange={handleChange}
                       required
                     />
+                  </div>
+                </div>
+              </div>
+
+              {/* Documentação FISPQ */}
+              <div className="form-section">
+                <div className="section-header">
+                  <h3>Documentação</h3>
+                  <p>Arquivo FISPQ (opcional)</p>
+                </div>
+                
+                <div className="form-grid">
+                  <div className="form-group full-width">
+                    <label htmlFor="arquivo_pdf">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14,2 14,8 20,8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10,9 9,9 8,9"/>
+                      </svg>
+                      Arquivo FISPQ (PDF)
+                    </label>
+                    <div className="file-upload-container">
+                      <input
+                        id="arquivo_pdf"
+                        name="arquivo_pdf"
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleFileChange}
+                        className="file-input"
+                      />
+                      <div className="file-upload-display">
+                        {pdfFileName ? (
+                          <div className="file-selected">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                              <polyline points="14,2 14,8 20,8"/>
+                            </svg>
+                            <span>{pdfFileName}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPdfFile(null);
+                                setPdfFileName("");
+                                document.getElementById('arquivo_pdf').value = '';
+                              }}
+                              className="remove-file"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="18" y1="6" x2="6" y2="18"/>
+                                <line x1="6" y1="6" x2="18" y2="18"/>
+                              </svg>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="file-upload-placeholder">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                              <polyline points="7,10 12,15 17,10"/>
+                              <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            <span>Clique para selecionar arquivo PDF ou arraste aqui</span>
+                            <small>Apenas arquivos PDF são aceitos</small>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

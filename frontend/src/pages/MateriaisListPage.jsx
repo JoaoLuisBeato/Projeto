@@ -39,7 +39,8 @@ function MateriaisListPage() {
   const filteredMateriais = materiais.filter(material => {
     const matchesSearch = material.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          material.fabricante.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         material.tipo.toLowerCase().includes(searchTerm.toLowerCase());
+                         material.tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (material.codigo_material && material.codigo_material.toLowerCase().includes(searchTerm.toLowerCase()));
     
     let matchesFilter = false;
     
@@ -96,6 +97,28 @@ function MateriaisListPage() {
     const diffTime = dataValidade - hoje;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
+  };
+
+  // Função para download do PDF FISPQ
+  const handleDownloadPDF = async (materialId) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/materiais/${materialId}/pdf`, {
+        responseType: 'blob'
+      });
+      
+      // Criar um link para download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `fispq_material_${materialId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erro ao baixar PDF:', error);
+      alert('Erro ao baixar o arquivo PDF. Verifique se o arquivo existe.');
+    }
   };
 
   // Função para obter status do material
@@ -347,7 +370,12 @@ function MateriaisListPage() {
                       <div className="material-header">
                         <div className="material-title">
                           <h3>{material.nome}</h3>
-                          <span className="material-type">{material.tipo}</span>
+                          <div className="material-subtitle">
+                            <span className="material-type">{material.tipo}</span>
+                            {material.codigo_material && (
+                              <span className="material-code">Código: {material.codigo_material}</span>
+                            )}
+                          </div>
                         </div>
                         <div className="material-status" style={{ backgroundColor: status.color + "20", color: status.color }}>
                           <div className="status-dot" style={{ backgroundColor: status.color }}></div>
@@ -437,6 +465,19 @@ function MateriaisListPage() {
                               <span>Excluir</span>
                             </>
                           )}
+                        </button>
+                        <button 
+                          className="btn-action pdf"
+                          onClick={() => handleDownloadPDF(material.id)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <line x1="16" y1="9" x2="8" y2="9"/>
+                          </svg>
+                          <span>FISPQ</span>
                         </button>
                       </div>
                     </div>
