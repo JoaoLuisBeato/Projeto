@@ -59,9 +59,9 @@ function LoginPage() {
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
               </svg>
             </div>
-            <h1 className="app-title">Sistema de Gestão</h1>
+            <h1 className="app-title">Lab-Manager</h1>
           </div>
-          <p className="welcome-text">Bem-vindo de volta</p>
+          <p className="welcome-text">Bem-vindo</p>
           <p className="subtitle">Faça login para acessar sua conta</p>
         </div>
 
