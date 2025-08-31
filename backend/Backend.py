@@ -475,13 +475,35 @@ def listar_materiais_vencidos():
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
-            SELECT * FROM materiais
+            SELECT 
+                id,
+                nome,
+                tipo,
+                quantidade,
+                unidade,
+                validade,
+                estoque_atual,
+                estoque_minimo,
+                preco,
+                fabricante
+            FROM materiais
             WHERE validade < CURDATE()
             ORDER BY nome ASC
         """)
         vencidos = cursor.fetchall()
 
-        return jsonify(vencidos), 200
+        # Converter tipos de dados para garantir serialização JSON
+        materiais_serializados = []
+        for material in vencidos:
+            material_serializado = {}
+            for key, value in material.items():
+                if isinstance(value, (int, float, str, bool)) or value is None:
+                    material_serializado[key] = value
+                else:
+                    material_serializado[key] = str(value)
+            materiais_serializados.append(material_serializado)
+
+        return jsonify(materiais_serializados), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -626,6 +648,413 @@ def exportar_materiais_csv():
             as_attachment=True,
             download_name=filename
         )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# ==================== ROTAS DE EQUIPAMENTOS ====================
+
+@app.route("/equipamentos", methods=["POST"])
+def adicionar_equipamento():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        data = request.json
+        codigo = data.get("codigo")
+        nome = data.get("nome")
+        modelo = data.get("modelo")
+        fabricante = data.get("fabricante")
+        numero_serie = data.get("numero_serie")
+        categoria = data.get("categoria")
+        localizacao = data.get("localizacao")
+        status = data.get("status", "ativo")
+        data_aquisicao = data.get("data_aquisicao")
+        valor_aquisicao = data.get("valor_aquisicao")
+        garantia_ate = data.get("garantia_ate")
+        especificacoes_tecnicas = data.get("especificacoes_tecnicas")
+        observacoes = data.get("observacoes")
+
+        query = """
+        INSERT INTO equipamentos (codigo, nome, modelo, fabricante, numero_serie, categoria, 
+                                 localizacao, status, data_aquisicao, valor_aquisicao, 
+                                 garantia_ate, especificacoes_tecnicas, observacoes)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        values = (
+            codigo, nome, modelo, fabricante, numero_serie, categoria, localizacao, status,
+            data_aquisicao, valor_aquisicao, garantia_ate, especificacoes_tecnicas, observacoes
+        )
+
+        cursor.execute(query, values)
+        conn.commit()
+
+        return jsonify({"message": "Equipamento adicionado com sucesso!"}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/equipamentos", methods=["GET"])
+def listar_equipamentos():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+        SELECT e.*, 
+               COUNT(m.id) as total_manutencoes,
+               COUNT(CASE WHEN m.status = 'agendada' THEN 1 END) as manutencoes_pendentes
+        FROM equipamentos e
+        LEFT JOIN manutencoes m ON e.id = m.equipamento_id
+        GROUP BY e.id
+        ORDER BY e.nome ASC
+        """
+        cursor.execute(query)
+        equipamentos = cursor.fetchall()
+
+        # Converter tipos de dados
+        for equipamento in equipamentos:
+            if equipamento['data_aquisicao']:
+                equipamento['data_aquisicao'] = equipamento['data_aquisicao'].isoformat()
+            if equipamento['garantia_ate']:
+                equipamento['garantia_ate'] = equipamento['garantia_ate'].isoformat()
+            if equipamento['valor_aquisicao']:
+                equipamento['valor_aquisicao'] = float(equipamento['valor_aquisicao'])
+
+        return jsonify(equipamentos), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/equipamentos/<int:id>", methods=["GET"])
+def buscar_equipamento_por_id(id):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT * FROM equipamentos WHERE id = %s", (id,))
+        equipamento = cursor.fetchone()
+
+        if equipamento:
+            # Converter tipos de dados
+            if equipamento['data_aquisicao']:
+                equipamento['data_aquisicao'] = equipamento['data_aquisicao'].isoformat()
+            if equipamento['garantia_ate']:
+                equipamento['garantia_ate'] = equipamento['garantia_ate'].isoformat()
+            if equipamento['valor_aquisicao']:
+                equipamento['valor_aquisicao'] = float(equipamento['valor_aquisicao'])
+            
+            return jsonify(equipamento), 200
+        else:
+            return jsonify({"error": "Equipamento não encontrado"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/equipamentos/<int:id>", methods=["PUT"])
+def atualizar_equipamento(id):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        data = request.json
+        codigo = data.get("codigo")
+        nome = data.get("nome")
+        modelo = data.get("modelo")
+        fabricante = data.get("fabricante")
+        numero_serie = data.get("numero_serie")
+        categoria = data.get("categoria")
+        localizacao = data.get("localizacao")
+        status = data.get("status")
+        data_aquisicao = data.get("data_aquisicao")
+        valor_aquisicao = data.get("valor_aquisicao")
+        garantia_ate = data.get("garantia_ate")
+        especificacoes_tecnicas = data.get("especificacoes_tecnicas")
+        observacoes = data.get("observacoes")
+
+        query = """
+        UPDATE equipamentos 
+        SET codigo = %s, nome = %s, modelo = %s, fabricante = %s, numero_serie = %s, 
+            categoria = %s, localizacao = %s, status = %s, data_aquisicao = %s, 
+            valor_aquisicao = %s, garantia_ate = %s, especificacoes_tecnicas = %s, observacoes = %s
+        WHERE id = %s
+        """
+        values = (
+            codigo, nome, modelo, fabricante, numero_serie, categoria, localizacao, status,
+            data_aquisicao, valor_aquisicao, garantia_ate, especificacoes_tecnicas, observacoes, id
+        )
+
+        cursor.execute(query, values)
+        conn.commit()
+
+        if cursor.rowcount > 0:
+            return jsonify({"message": "Equipamento atualizado com sucesso!"}), 200
+        else:
+            return jsonify({"error": "Equipamento não encontrado"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/equipamentos/<int:id>", methods=["DELETE"])
+def excluir_equipamento(id):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        # Verifica se o equipamento existe
+        cursor.execute("SELECT id FROM equipamentos WHERE id = %s", (id,))
+        if not cursor.fetchone():
+            return jsonify({"error": "Equipamento não encontrado"}), 404
+
+        # Exclui o equipamento
+        cursor.execute("DELETE FROM equipamentos WHERE id = %s", (id,))
+        conn.commit()
+
+        return jsonify({"message": "Equipamento excluído com sucesso!"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# ==================== ROTAS DE MANUTENÇÕES ====================
+
+@app.route("/manutencoes", methods=["POST"])
+def adicionar_manutencao():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        data = request.json
+        equipamento_id = data.get("equipamento_id")
+        tipo = data.get("tipo")
+        descricao = data.get("descricao")
+        data_agendada = data.get("data_agendada")
+        status = data.get("status", "agendada")
+        prioridade = data.get("prioridade", "media")
+        responsavel = data.get("responsavel")
+        fornecedor = data.get("fornecedor")
+        custo = data.get("custo")
+        observacoes = data.get("observacoes")
+
+        query = """
+        INSERT INTO manutencoes (equipamento_id, tipo, descricao, data_agendada, status, 
+                                prioridade, responsavel, fornecedor, custo, observacoes)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        values = (
+            equipamento_id, tipo, descricao, data_agendada, status, prioridade,
+            responsavel, fornecedor, custo, observacoes
+        )
+
+        cursor.execute(query, values)
+        manutencao_id = cursor.lastrowid
+
+        # Registrar no histórico
+        cursor.execute("""
+        INSERT INTO historico_manutencoes (equipamento_id, manutencao_id, tipo_acao, descricao, usuario)
+        VALUES (%s, %s, 'criacao', 'Manutenção criada', 'Sistema')
+        """, (equipamento_id, manutencao_id))
+
+        conn.commit()
+
+        return jsonify({"message": "Manutenção agendada com sucesso!", "id": manutencao_id}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/manutencoes", methods=["GET"])
+def listar_manutencoes():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+        SELECT m.*, e.nome as nome_equipamento, e.codigo as codigo_equipamento
+        FROM manutencoes m
+        JOIN equipamentos e ON m.equipamento_id = e.id
+        ORDER BY m.data_agendada ASC
+        """
+        cursor.execute(query)
+        manutencoes = cursor.fetchall()
+
+        # Converter tipos de dados
+        for manutencao in manutencoes:
+            if manutencao['data_agendada']:
+                manutencao['data_agendada'] = manutencao['data_agendada'].isoformat()
+            if manutencao['data_realizada']:
+                manutencao['data_realizada'] = manutencao['data_realizada'].isoformat()
+            if manutencao['custo']:
+                manutencao['custo'] = float(manutencao['custo'])
+
+        return jsonify(manutencoes), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/manutencoes/<int:id>", methods=["PUT"])
+def atualizar_manutencao(id):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        data = request.json
+        tipo = data.get("tipo")
+        descricao = data.get("descricao")
+        data_agendada = data.get("data_agendada")
+        data_realizada = data.get("data_realizada")
+        status = data.get("status")
+        prioridade = data.get("prioridade")
+        responsavel = data.get("responsavel")
+        fornecedor = data.get("fornecedor")
+        custo = data.get("custo")
+        observacoes = data.get("observacoes")
+
+        query = """
+        UPDATE manutencoes 
+        SET tipo = %s, descricao = %s, data_agendada = %s, data_realizada = %s, status = %s,
+            prioridade = %s, responsavel = %s, fornecedor = %s, custo = %s, observacoes = %s
+        WHERE id = %s
+        """
+        values = (
+            tipo, descricao, data_agendada, data_realizada, status, prioridade,
+            responsavel, fornecedor, custo, observacoes, id
+        )
+
+        cursor.execute(query, values)
+        conn.commit()
+
+        if cursor.rowcount > 0:
+            return jsonify({"message": "Manutenção atualizada com sucesso!"}), 200
+        else:
+            return jsonify({"error": "Manutenção não encontrada"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/manutencoes/<int:id>/concluir", methods=["PATCH"])
+def concluir_manutencao(id):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        data = request.json
+        data_realizada = data.get("data_realizada", datetime.now().date().isoformat())
+        custo = data.get("custo")
+        observacoes = data.get("observacoes")
+
+        # Atualizar manutenção
+        query = """
+        UPDATE manutencoes 
+        SET status = 'concluida', data_realizada = %s, custo = %s, observacoes = %s
+        WHERE id = %s
+        """
+        cursor.execute(query, (data_realizada, custo, observacoes, id))
+
+        # Obter equipamento_id para atualizar status
+        cursor.execute("SELECT equipamento_id FROM manutencoes WHERE id = %s", (id,))
+        result = cursor.fetchone()
+        if result:
+            equipamento_id = result[0]
+            
+            # Atualizar status do equipamento para ativo
+            cursor.execute("UPDATE equipamentos SET status = 'ativo' WHERE id = %s", (equipamento_id,))
+
+        conn.commit()
+
+        return jsonify({"message": "Manutenção concluída com sucesso!"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@app.route("/equipamentos/stats", methods=["GET"])
+def obter_estatisticas_equipamentos():
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Total de equipamentos
+        cursor.execute("SELECT COUNT(*) AS total FROM equipamentos")
+        total = cursor.fetchone()["total"]
+
+        # Equipamentos por status
+        cursor.execute("""
+            SELECT status, COUNT(*) as quantidade 
+            FROM equipamentos 
+            GROUP BY status
+        """)
+        status_stats = cursor.fetchall()
+
+        # Manutenções pendentes
+        cursor.execute("""
+            SELECT COUNT(*) AS pendentes 
+            FROM manutencoes 
+            WHERE status IN ('agendada', 'em_andamento')
+        """)
+        manutencoes_pendentes = cursor.fetchone()["pendentes"]
+
+        # Valor total dos equipamentos
+        cursor.execute("""
+            SELECT SUM(valor_aquisicao) as valor_total 
+            FROM equipamentos 
+            WHERE status = 'ativo'
+        """)
+        valor_total = cursor.fetchone()["valor_total"] or 0
+
+        return jsonify({
+            "total": total,
+            "status_stats": status_stats,
+            "manutencoes_pendentes": manutencoes_pendentes,
+            "valor_total": float(valor_total)
+        }), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

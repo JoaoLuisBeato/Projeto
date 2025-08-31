@@ -23,7 +23,7 @@ function Header() {
       case "/baixa-material":
         return "Baixa de Material";
       default:
-        return "Sistema de Gestão";
+        return "Sistema de Gestão de Materiais";
     }
   };
 

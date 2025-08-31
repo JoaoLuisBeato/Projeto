@@ -4,4 +4,27 @@
   height: 100vh;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
 }
+
+/* Reset global para evitar espaçamentos indesejados */
+body, html {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Garantir que as páginas ocupem toda a largura disponível */
+.equipamentos-list-page,
+.cadastro-equipamento-page,
+.manutencoes-page {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+

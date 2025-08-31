@@ -7,6 +7,9 @@ import MateriaisListPage from "./pages/MateriaisListPage";
 import HomePage from "./pages/HomePage";
 import BaixaMaterialPage from "./pages/BaixaMaterialPage";
 import NovaSolicitacaoPage from "./pages/NovaSolicitacaoPage";
+import EquipamentosListPage from "./pages/EquipamentosListPage";
+import CadastroEquipamentoPage from "./pages/CadastroEquipamentoPage";
+import ManutencoesPage from "./pages/ManutencoesPage";
 
 function App() {
   return (
@@ -20,6 +23,15 @@ function App() {
         <Route path="/materiaisList" element={<MateriaisListPage />} />
         <Route path="/baixa-material" element={<BaixaMaterialPage />} />
         <Route path="/nova-solicitacao" element={<NovaSolicitacaoPage />} />
+        
+        {/* Rotas de Equipamentos */}
+        <Route path="/equipamentos" element={<EquipamentosListPage />} />
+        <Route path="/equipamentos/novo" element={<CadastroEquipamentoPage />} />
+        <Route path="/equipamentos/:id" element={<CadastroEquipamentoPage />} />
+        
+        {/* Rotas de Manutenções */}
+        <Route path="/manutencoes" element={<ManutencoesPage />} />
+        <Route path="/manutencoes/equipamento/:equipamentoId" element={<ManutencoesPage />} />
       </Routes>
     </Router>
   );
