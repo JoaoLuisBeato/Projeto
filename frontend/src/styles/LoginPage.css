@@ -267,10 +267,11 @@ html, body, #root {
   display: block;
 }
 
-/* Botão de login */
-.login-button {
-  width: 100%;
-  padding: 16px;
+/* Botão de login - regra mais específica para evitar interferências */
+form .login-button,
+.login-form .login-button {
+  width: 100% !important;
+  padding: 16px !important;
   background: linear-gradient(135deg, #4ca1af, #357f8a);
   border: none;
   border-radius: 12px;
@@ -285,26 +286,48 @@ html, body, #root {
   box-shadow: 0 4px 12px rgba(76, 161, 175, 0.3);
   position: relative;
   overflow: hidden;
-  min-height: 56px;
-  max-width: 100%;
-  box-sizing: border-box;
+  min-height: 56px !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0;
+  flex-grow: 0;
+  flex-basis: auto;
 }
 
-.login-button:hover:not(:disabled) {
+form .login-button:hover:not(:disabled),
+.login-form .login-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(76, 161, 175, 0.4);
+  width: 100% !important;
+  min-height: 56px !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 16px !important;
 }
 
-.login-button:active:not(:disabled) {
+form .login-button:active:not(:disabled),
+.login-form .login-button:active:not(:disabled) {
   transform: translateY(0);
+  width: 100% !important;
+  min-height: 56px !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 16px !important;
 }
 
-.login-button:disabled {
+form .login-button:disabled,
+.login-form .login-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+  width: 100% !important;
+  min-height: 56px !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 16px !important;
 }
 
-.login-button svg {
+form .login-button svg,
+.login-form .login-button svg {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
