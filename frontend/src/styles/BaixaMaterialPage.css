@@ -2,47 +2,54 @@
 .baixa-layout {
   display: flex;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
 }
 
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
   height: 100vh;
+  margin: 0;
 }
 
 .baixa-container {
   flex: 1;
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
+  padding: 24px 32px;
   overflow-y: auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  width: 100%;
 }
 
 /* Header da página */
 .page-header {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 24px 32px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(76, 161, 175, 0.1);
+  flex-shrink: 0;
 }
 
 .header-content {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 16px;
 }
 
 .header-icon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4ca1af, #357f8a);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -56,44 +63,49 @@
 }
 
 .header-text h1 {
-  margin: 0;
-  font-size: 1.875rem;
+  font-size: 28px;
   font-weight: 700;
-  color: #1e293b;
+  color: #2c3e50;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.5px;
 }
 
 .header-text p {
-  margin: 0.5rem 0 0 0;
-  color: #64748b;
-  font-size: 1rem;
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
 }
 
 /* Seção de busca */
 .scan-section {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(76, 161, 175, 0.1);
+  flex-shrink: 0;
 }
 
 .scan-header {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 24px;
 }
 
 .scan-header h2 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.5rem;
+  font-size: 20px;
   font-weight: 600;
-  color: #1e293b;
+  color: #2c3e50;
+  margin: 0 0 8px 0;
 }
 
 .scan-header p {
+  font-size: 14px;
+  color: #6b7280;
   margin: 0;
-  color: #64748b;
-  font-size: 1rem;
+  font-weight: 500;
 }
 
 .scan-input-group {
@@ -139,31 +151,33 @@
 }
 
 .btn-search {
-  padding: 1rem 1.5rem;
-  background: #667eea;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #4ca1af, #357f8a);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
   min-width: 120px;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(76, 161, 175, 0.3);
 }
 
 .btn-search:hover:not(:disabled) {
-  background: #5a67d8;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 161, 175, 0.4);
 }
 
 .btn-search:disabled {
   background: #cbd5e1;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 .btn-search svg {
@@ -393,26 +407,28 @@
 }
 
 .btn-primary {
-  padding: 0.75rem 1.5rem;
-  background: #667eea;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #4ca1af, #357f8a);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(76, 161, 175, 0.3);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #5a67d8;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(76, 161, 175, 0.4);
 }
 
 .btn-primary:disabled {
   background: #cbd5e1;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 /* Mensagens */

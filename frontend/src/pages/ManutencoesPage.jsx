@@ -54,11 +54,6 @@ const ManutencoesPage = () => {
   };
 
   const handleConcluirManutencao = async (id) => {
-    const custo = prompt('Digite o custo da manutenção (R$):');
-    const observacoes = prompt('Observações finais:');
-    
-    if (custo === null) return; // Usuário cancelou
-
     try {
       const response = await fetch(`http://localhost:5000/manutencoes/${id}/concluir`, {
         method: 'PATCH',
@@ -66,8 +61,8 @@ const ManutencoesPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          custo: parseFloat(custo) || 0,
-          observacoes: observacoes || ''
+          custo: 0,
+          observacoes: ''
         }),
       });
 

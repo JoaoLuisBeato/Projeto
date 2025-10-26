@@ -15,18 +15,36 @@ function BaixaMaterialPage() {
 
   // Função para buscar material por código
   const buscarMaterial = async (codigo) => {
-    if (!codigo.trim()) return;
+    const codigoLimpo = (codigo || "").trim();
+    if (!codigoLimpo) return;
 
     setLoading(true);
     setErro("");
+    setMensagem("");
     setMaterialEncontrado(null);
 
     try {
-      const response = await axios.get(`http://localhost:5000/materiais/codigo/${codigo}`);
-      setMaterialEncontrado(response.data);
-      setMensagem("Material encontrado!");
+      console.log("Buscando material com:", codigoLimpo);
+      const response = await axios.get(`http://localhost:5000/materiais/codigo/${encodeURIComponent(codigoLimpo)}`);
+      
+      if (response.data && response.data.id) {
+        setMaterialEncontrado(response.data);
+        setMensagem(`Material encontrado: ${response.data.nome} (${response.data.codigo_material})`);
+      } else {
+        setErro("Material não encontrado. Verifique o código ou nome e tente novamente.");
+      }
     } catch (err) {
-      setErro("Material não encontrado. Verifique o código e tente novamente.");
+      console.error("Erro na busca:", err);
+      
+      if (err.response?.status === 404) {
+        setErro("Material não encontrado. Verifique o código ou nome e tente novamente.");
+      } else if (err.response?.status === 500) {
+        setErro("Erro interno do servidor. Tente novamente em alguns instantes.");
+      } else if (err.code === 'ECONNREFUSED') {
+        setErro("Não foi possível conectar ao servidor. Verifique se o backend está rodando.");
+      } else {
+        setErro(`Erro: ${err.response?.data?.error || err.message || "Erro desconhecido"}`);
+      }
       setMaterialEncontrado(null);
     } finally {
       setLoading(false);
@@ -110,9 +128,16 @@ function BaixaMaterialPage() {
                   </svg>
                   <input
                     type="text"
-                    placeholder="Digite o código do material (ex: AC001, REAG001)..."
+                    placeholder="Digite o código ou nome do material (ex: AC001, Ácido Clorídrico)..."
                     value={codigoMaterial}
-                    onChange={(e) => setCodigoMaterial(e.target.value)}
+                    onChange={(e) => {
+                      setCodigoMaterial(e.target.value);
+                      // Limpar mensagens quando o usuário começar a digitar
+                      if (mensagem || erro) {
+                        setMensagem("");
+                        setErro("");
+                      }
+                    }}
                     onKeyPress={(e) => e.key === 'Enter' && buscarMaterial(codigoMaterial)}
                     className="scan-input"
                     disabled={loading}

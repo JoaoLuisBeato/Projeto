@@ -210,25 +210,70 @@ def buscar_material_por_codigo(codigo):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
+        # Primeiro, tenta buscar por código exato
         cursor.execute("""
-            SELECT * FROM materiais 
-            WHERE codigo_material = %s OR id = %s OR nome LIKE %s OR fabricante LIKE %s
-            ORDER BY nome ASC
-        """, (codigo, codigo, f"%{codigo}%", f"%{codigo}%"))
-
+            SELECT id, codigo_material, nome, tipo, fabricante, quantidade, unidade, 
+                   validade, preco, estoque_atual, estoque_minimo,
+                   CASE WHEN arquivo_pdf IS NOT NULL THEN 1 ELSE 0 END as tem_pdf
+            FROM materiais 
+            WHERE codigo_material = %s
+        """, (codigo,))
+        
         material = cursor.fetchone()
 
+        # Se não encontrou por código exato, busca por nome (case insensitive)
+        if not material:
+            cursor.execute("""
+                SELECT id, codigo_material, nome, tipo, fabricante, quantidade, unidade, 
+                       validade, preco, estoque_atual, estoque_minimo,
+                       CASE WHEN arquivo_pdf IS NOT NULL THEN 1 ELSE 0 END as tem_pdf
+                FROM materiais 
+                WHERE LOWER(nome) LIKE LOWER(%s)
+                ORDER BY nome ASC
+                LIMIT 1
+            """, (f"%{codigo}%",))
+            material = cursor.fetchone()
+
+        # Se ainda não encontrou, busca por fabricante
+        if not material:
+            cursor.execute("""
+                SELECT id, codigo_material, nome, tipo, fabricante, quantidade, unidade, 
+                       validade, preco, estoque_atual, estoque_minimo,
+                       CASE WHEN arquivo_pdf IS NOT NULL THEN 1 ELSE 0 END as tem_pdf
+                FROM materiais 
+                WHERE LOWER(fabricante) LIKE LOWER(%s)
+                ORDER BY nome ASC
+                LIMIT 1
+            """, (f"%{codigo}%",))
+            material = cursor.fetchone()
+
         if material:
+            # Converter tipos de dados para garantir serialização JSON
+            if material['validade']:
+                material['validade'] = material['validade'].isoformat()
+            if material['preco'] is not None:
+                material['preco'] = float(material['preco'])
+            if material['quantidade'] is not None:
+                material['quantidade'] = float(material['quantidade'])
+            if material['estoque_atual'] is not None:
+                material['estoque_atual'] = float(material['estoque_atual'])
+            if material['estoque_minimo'] is not None:
+                material['estoque_minimo'] = float(material['estoque_minimo'])
+            
             return jsonify(material), 200
         else:
             return jsonify({"error": "Material não encontrado"}), 404
 
+    except mysql.connector.Error as e:
+        return jsonify({"error": f"Erro de conexão com banco de dados: {str(e)}"}), 500
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Erro interno do servidor: {str(e)}"}), 500
 
     finally:
-        cursor.close()
-        conn.close()
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
 
 
 @app.route("/materiais/<int:id>", methods=["GET"])
