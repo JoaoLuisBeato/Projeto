@@ -930,6 +930,42 @@ def listar_manutencoes():
         conn.close()
 
 
+@app.route("/manutencoes/<int:id>", methods=["GET"])
+def buscar_manutencao(id):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+        SELECT m.*, e.nome as nome_equipamento, e.codigo as codigo_equipamento
+        FROM manutencoes m
+        JOIN equipamentos e ON m.equipamento_id = e.id
+        WHERE m.id = %s
+        """
+        cursor.execute(query, (id,))
+        manutencao = cursor.fetchone()
+
+        if manutencao:
+            # Converter tipos de dados
+            if manutencao['data_agendada']:
+                manutencao['data_agendada'] = manutencao['data_agendada'].isoformat()
+            if manutencao['data_realizada']:
+                manutencao['data_realizada'] = manutencao['data_realizada'].isoformat()
+            if manutencao['custo']:
+                manutencao['custo'] = float(manutencao['custo'])
+            
+            return jsonify(manutencao), 200
+        else:
+            return jsonify({"error": "Manutenção não encontrada"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
 @app.route("/manutencoes/<int:id>", methods=["PUT"])
 def atualizar_manutencao(id):
     try:

@@ -10,6 +10,7 @@ import NovaSolicitacaoPage from "./pages/NovaSolicitacaoPage";
 import EquipamentosListPage from "./pages/EquipamentosListPage";
 import CadastroEquipamentoPage from "./pages/CadastroEquipamentoPage";
 import ManutencoesPage from "./pages/ManutencoesPage";
+import CadastroManutencaoPage from "./pages/CadastroManutencaoPage";
 
 function App() {
   return (
@@ -32,6 +33,8 @@ function App() {
         {/* Rotas de Manutenções */}
         <Route path="/manutencoes" element={<ManutencoesPage />} />
         <Route path="/manutencoes/equipamento/:equipamentoId" element={<ManutencoesPage />} />
+        <Route path="/manutencoes/novo" element={<CadastroManutencaoPage />} />
+        <Route path="/manutencoes/editar/:id" element={<CadastroManutencaoPage />} />
       </Routes>
     </Router>
   );

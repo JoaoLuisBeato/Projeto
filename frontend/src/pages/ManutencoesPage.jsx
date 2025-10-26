@@ -225,7 +225,7 @@ const ManutencoesPage = () => {
               </div>
             </div>
             <div className="header-actions">
-              <Link to="/manutencoes/nova" className="btn-primary">
+              <Link to="/manutencoes/novo" className="btn-primary">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 5v14M5 12h14"/>
                 </svg>
@@ -362,7 +362,7 @@ const ManutencoesPage = () => {
 
               <div className="card-actions">
                 <Link 
-                  to={`/manutencoes/${manutencao.id}`} 
+                  to={`/manutencoes/editar/${manutencao.id}`} 
                   className="btn-secondary"
                 >
                   Editar
