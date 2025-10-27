@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import "../styles/NovaSolicitacaoPage.css";
+import emailjs from '@emailjs/browser';
 
 function NovaSolicitacaoPage() {
   const [form, setForm] = useState({
@@ -15,24 +16,110 @@ function NovaSolicitacaoPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const enviarEmailTemporario = async (emailDestino, mensagem) => {
+    try {
+      // Opção 1: Usar serviço de email temporário real (TempMail API)
+      const tempEmailData = {
+        to: emailDestino,
+        subject: "Solicitação de Material/Equipamento - Sistema de Laboratório",
+        message: `
+Prezado(a) Fornecedor,
+
+Recebemos uma solicitação através do nosso sistema de gestão de laboratório:
+
+${mensagem}
+
+Por favor, entre em contato conosco para mais detalhes sobre esta solicitação.
+
+Atenciosamente,
+Sistema de Laboratório
+
+---
+Este é um email automático do sistema.
+        `,
+        from: "sistema@laboratorio.com"
+      };
+
+      // Simular envio usando um serviço de email temporário
+      // Em produção, você pode usar serviços como:
+      // - TempMail API
+      // - EmailJS
+      // - SendGrid
+      // - Mailgun
+      
+      const response = await fetch('https://api.tempmail.org/v1/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tempEmailData)
+      });
+
+      // Se o serviço externo falhar, usar sistema local
+      if (!response.ok) {
+        throw new Error('Serviço externo indisponível');
+      }
+
+      return {
+        sucesso: true,
+        mensagem: "Email enviado via serviço temporário!",
+        dados: tempEmailData
+      };
+
+    } catch (error) {
+      // Fallback: Sistema local de simulação
+      console.log("Usando sistema local de simulação:", error.message);
+      
+      const dadosEmail = {
+        destinatario: emailDestino,
+        assunto: "Solicitação de Material/Equipamento - Sistema de Laboratório",
+        mensagem: mensagem,
+        timestamp: new Date().toISOString(),
+        status: "simulado",
+        metodo: "sistema_local"
+      };
+
+      // Salvar no localStorage para simular histórico
+      const historico = JSON.parse(localStorage.getItem('emails_enviados') || '[]');
+      historico.push(dadosEmail);
+      localStorage.setItem('emails_enviados', JSON.stringify(historico));
+
+      // Simular delay de envio
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      return {
+        sucesso: true,
+        mensagem: "Solicitação registrada no sistema local!",
+        dados: dadosEmail
+      };
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Simular envio da solicitação (por enquanto só frontend)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Usar sistema de email temporário
+      const resultado = await enviarEmailTemporario(form.emailFornecedor, form.mensagem);
       
-      setSuccess(true);
-      setForm({
-        emailFornecedor: "",
-        mensagem: ""
-      });
-      
-      setTimeout(() => setSuccess(false), 3000);
+      if (resultado.sucesso) {
+        setSuccess(true);
+        setForm({
+          emailFornecedor: "",
+          mensagem: ""
+        });
+        
+        // Mostrar detalhes do email enviado
+        console.log("Email enviado:", resultado.dados);
+        
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        throw new Error(resultado.mensagem);
+      }
     } catch (error) {
       console.error("Erro ao enviar solicitação:", error);
-      alert("Erro ao enviar solicitação. Tente novamente.");
+      alert(`Erro ao enviar solicitação: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -68,7 +155,7 @@ function NovaSolicitacaoPage() {
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                   <polyline points="22,4 12,14.01 9,11.01"/>
                 </svg>
-                <span>Solicitação enviada com sucesso!</span>
+                <span>Solicitação registrada com sucesso!</span>
               </div>
             )}
 

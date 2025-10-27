@@ -6,12 +6,117 @@ import io
 from datetime import datetime
 import os
 import mysql.connector
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+from email_config import EMAIL_CONFIG
 
 app = Flask(__name__)
 CORS(app)
 
 # Configuração para upload de arquivos
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+def enviar_email(destinatario, assunto, corpo):
+    """
+    Função para enviar email usando SMTP
+    """
+    try:
+        # Criar mensagem
+        msg = MIMEMultipart()
+        msg['From'] = f"{EMAIL_CONFIG['sender_name']} <{EMAIL_CONFIG['sender_email']}>"
+        msg['To'] = destinatario
+        msg['Subject'] = assunto
+        
+        # Adicionar corpo do email
+        msg.attach(MIMEText(corpo, 'html', 'utf-8'))
+        
+        # Conectar ao servidor SMTP
+        server = smtplib.SMTP(EMAIL_CONFIG['smtp_server'], EMAIL_CONFIG['smtp_port'])
+        server.starttls()  # Habilitar criptografia TLS
+        server.login(EMAIL_CONFIG['sender_email'], EMAIL_CONFIG['sender_password'])
+        
+        # Enviar email
+        text = msg.as_string()
+        server.sendmail(EMAIL_CONFIG['sender_email'], destinatario, text)
+        server.quit()
+        
+        return True, "Email enviado com sucesso!"
+        
+    except Exception as e:
+        return False, f"Erro ao enviar email: {str(e)}"
+
+
+@app.route("/enviar-solicitacao", methods=["POST"])
+def enviar_solicitacao():
+    """
+    Endpoint para enviar solicitação por email
+    """
+    try:
+        data = request.json
+        email_destino = data.get("emailFornecedor")
+        mensagem = data.get("mensagem")
+        
+        if not email_destino or not mensagem:
+            return jsonify({"error": "Email destino e mensagem são obrigatórios"}), 400
+        
+        # Criar assunto e corpo do email
+        assunto = "Solicitação de Material/Equipamento - Sistema de Laboratório"
+        
+        corpo_html = f"""
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background-color: #4ca1af; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+                .content {{ background-color: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }}
+                .message {{ background-color: white; padding: 15px; border-left: 4px solid #4ca1af; margin: 15px 0; }}
+                .footer {{ text-align: center; margin-top: 20px; color: #666; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>Sistema de Laboratório</h2>
+                    <p>Solicitação de Material/Equipamento</p>
+                </div>
+                <div class="content">
+                    <p>Prezado(a) Fornecedor,</p>
+                    <p>Recebemos uma solicitação através do nosso sistema de gestão de laboratório:</p>
+                    
+                    <div class="message">
+                        <strong>Mensagem:</strong><br>
+                        {mensagem.replace('\n', '<br>')}
+                    </div>
+                    
+                    <p>Por favor, entre em contato conosco para mais detalhes sobre esta solicitação.</p>
+                    
+                    <p>Atenciosamente,<br>
+                    <strong>Sistema de Laboratório</strong></p>
+                </div>
+                <div class="footer">
+                    <p>Este é um email automático do sistema. Por favor, não responda diretamente a este email.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Enviar email
+        sucesso, resultado = enviar_email(email_destino, assunto, corpo_html)
+        
+        if sucesso:
+            return jsonify({"message": resultado}), 200
+        else:
+            return jsonify({"error": resultado}), 500
+            
+    except Exception as e:
+        return jsonify({"error": f"Erro interno: {str(e)}"}), 500
+
 
 @app.route("/login", methods=["POST"])
 def login():
