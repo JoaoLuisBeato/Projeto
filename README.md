@@ -117,4 +117,3 @@ The following roadmap outlines features for **scaling** and **hardening** the ap
 | :--- | :--- |
 | **LinkedIn** | https://www.linkedin.com/in/joaoluisbeatocardoso/ |
 | **Email** | joaobeatocardoso@gmail.com |
-| **Portfolio** | [Your Personal Portfolio/Website URL] |
