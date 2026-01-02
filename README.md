@@ -115,6 +115,6 @@ The following roadmap outlines features for **scaling** and **hardening** the ap
 
 | Platform | Placeholder |
 | :--- | :--- |
-| **LinkedIn** | [Your LinkedIn Profile URL] |
-| **Email** | [Your Professional Email Address] |
+| **LinkedIn** | https://www.linkedin.com/in/joaoluisbeatocardoso/ |
+| **Email** | joaobeatocardoso@gmail.com |
 | **Portfolio** | [Your Personal Portfolio/Website URL] |
